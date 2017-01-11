@@ -21,61 +21,122 @@
   <script src="js/glift_1_1_2.min.js"></script>
   
   <style type="text/css">
-      #myId {
+      #gliftDiv {
           width:500px;
           height:500px;
       }
   </style>
     
-  <div id="myId">
+  <div id="gliftDiv">
   </div>
 
   <script>
-//            glift.create({
-//        divId: 'myId',
-//        sgf: 'test.sgf'
-//      });
 
-gliftWidget = glift.create({
-  divId: "myId",
-  sgfDefaults : {
-    sgfString : "(;SZ[9];W[fc];W[gc];W[hc])",
-    boardRegion : glift.enums.boardRegions.ALL,
-    initialPosition : 3,
-    widgetType : glift.WidgetType.GAME_VIEWER,
-    uiComponents : ["BOARD"]
-  },
-  display: {
-    theme: 'DEPTH',
-    goBoardBackground: 'images/purty_wood.png'
-  }
-});
+var BOARD_SIZE = 9;
+var BOARD_X_START = 40;
+var BOARD_Y_START = 40;
+var BOARD_X_CELL = 52;
+var BOARD_Y_CELL = 52;
 
-var div = document.getElementById("myId");
+var EMPTY = 0;
+var BLACK = 1;
+var WHITE = 2;
+var KOBAN = 3;
 
-function fooClick(event){
-    
-    var x = event.clientX - div.offsetLeft;
-    var y = event.clientY - div.offsetTop;
-    alert("CLICK! (" + x + "," + y + ")");
-    
-    gliftWidget = glift.create({
-  divId: "myId",
-  sgfDefaults : {
-    sgfString : "(;SZ[9];W[fc];W[gc];W[hc];B[ff])",
-    boardRegion : glift.enums.boardRegions.ALL,
-    initialPosition : 4,
-    widgetType : glift.WidgetType.GAME_VIEWER,
-    uiComponents : ["BOARD"]
-  },
-  display: {
-    theme: 'DEPTH',
-    goBoardBackground: 'images/purty_wood.png'
-  }
-});
+var currentPlayer = BLACK;
+var board = []; 
+for (var i = 0; i < BOARD_SIZE; i++) {
+    board.push([]);
+    for (var j = 0; j < BOARD_SIZE; j++)
+        board[i].push(EMPTY);
 }
 
-div.addEventListener("click", fooClick);
+function boardCopy() {
+    var ret = []; 
+    for (var i = 0; i < BOARD_SIZE; i++) {
+        ret.push([]);
+        for (var j = 0; j < BOARD_SIZE; j++)
+            ret[i].push(board[i][j]);
+    }
+    return ret;
+}
+
+var boardHistory = [boardCopy()];
+var moveHistory = [];
+
+
+function toLetter(index) {
+    return String.fromCharCode('a'.charCodeAt(0) + index);
+}
+
+function getSgfString() {
+    var ret = "(;SZ[" + BOARD_SIZE + "]";
+    for (var i = 0; i < moveHistory.length; i++) {
+        var move = moveHistory[i];
+        var colorLetter;
+        if (move.color == WHITE)
+            colorLetter = 'W';
+        else if (move.color == BLACK)
+            colorLetter = 'B';
+        else
+            throw "Assertion error: Invalid COLOR in move " + i + " = " + move;
+        ret += ";" + colorLetter + "[" + toLetter(move.x) + toLetter(move.y) + "]";
+    }
+    ret += ")";
+    return ret;
+}
+
+var gliftWidget = null;
+
+function drawBoard() {
+    if (gliftWidget !== null)
+        gliftWidget.destroy();
+    gliftWidget = glift.create({
+      divId: "gliftDiv",
+      sgfDefaults : {
+        sgfString : getSgfString(),
+        boardRegion : glift.enums.boardRegions.ALL,
+        initialPosition : moveHistory.length,
+        widgetType : glift.WidgetType.GAME_VIEWER,
+        uiComponents : ["BOARD"]
+      },
+      display: {
+        theme: 'DEPTH',
+        goBoardBackground: 'images/purty_wood.png'
+      }
+    });
+}
+
+function makeMove(color, x,y) {
+    
+    board[x][y] = color;
+    // TODO: ACTUALIZAR EL TABLERO ACORDE A LA JUGADA! Y NO PERMITIR SI ES INVALIDA.
+    boardHistory.push(boardCopy());
+    moveHistory.push({"color" : color, "x" : x, "y" : y});
+    drawBoard();
+}
+
+var gliftDiv = document.getElementById("gliftDiv");
+
+function fooClick(event) {
+    var x = event.clientX - gliftDiv.offsetLeft;
+    var y = event.clientY - gliftDiv.offsetTop;
+    var moveX = Math.round((x - BOARD_X_START) / BOARD_X_CELL);
+    var moveY = Math.round((y - BOARD_Y_START) / BOARD_Y_CELL);
+    if (0 <= moveX && moveX < BOARD_SIZE &&
+        0 <= moveY && moveY < BOARD_SIZE) {
+        makeMove(currentPlayer, moveX, moveY);
+        if (currentPlayer == BLACK)
+            currentPlayer = WHITE;
+        else if (currentPlayer == WHITE)
+            currentPlayer = BLACK;
+        else
+            throw "Assertion: el jugador actual solo puede ser blanco o negro! Es en su lugar " + currentPlayer;
+    }
+}
+
+gliftDiv.addEventListener("click", fooClick);
+drawBoard();
 
   </script>
   
