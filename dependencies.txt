@@ -1,0 +1,3 @@
+Usamos glift (js/glift_1_1_2.min.js):
+	http://www.gliftgo.com
+	https://github.com/Kashomon/glift
