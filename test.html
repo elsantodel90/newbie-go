@@ -49,24 +49,24 @@ var WHITE = 2;
 var KOBAN = 3;
 
 var currentPlayer = BLACK;
-var board = []; 
+var globalBoard = []; 
 for (var i = 0; i < BOARD_SIZE; i++) {
-    board.push([]);
+    globalBoard.push([]);
     for (var j = 0; j < BOARD_SIZE; j++)
-        board[i].push(EMPTY);
+        globalBoard[i].push(EMPTY);
 }
 
-function boardCopy() {
+function boardCopy(boardToCopy) {
     var ret = []; 
     for (var i = 0; i < BOARD_SIZE; i++) {
         ret.push([]);
         for (var j = 0; j < BOARD_SIZE; j++)
-            ret[i].push(board[i][j]);
+            ret[i].push(boardToCopy[i][j]);
     }
     return ret;
 }
 
-var boardHistory = [boardCopy()];
+var boardHistory = [boardCopy(globalBoard)];
 var moveHistory = [];
 
 
@@ -94,7 +94,7 @@ function getSgfString() {
 var gliftWidget = null;
 
 function drawBoard() {
-    document.getElementById("boardText").innerHTML = getBoardHTML();
+    document.getElementById("boardText").innerHTML = getBoardHTML(globalBoard);
     if (gliftWidget !== null)
         gliftWidget.destroy();
     gliftWidget = glift.create({
@@ -126,7 +126,7 @@ function cellToChar(cell) {
         throw "Assertion: contenido de intersección inválida. " + cell;
 }
 
-function getBoardHTML() {
+function getBoardHTML(board) {
     var ret = "";
     for (var i = 0; i < BOARD_SIZE; i++) {
         for (var j = 0; j < BOARD_SIZE; j++)
@@ -146,6 +146,7 @@ var dy = [1,-1,0,0];
 var dfsStatus;
 var dfsColor;
 var dfsMark;
+var dfsBoard;
 
 function clearDfsStatus() {
     dfsStatus = []; 
@@ -167,12 +168,12 @@ function libertyDfs(x,y) {
         var nx = x + dx[dir];
         var ny = y + dy[dir];
         if (inRange(nx,ny) && dfsStatus[nx][ny] != dfsMark) {
-            if (board[nx][ny] == EMPTY)
+            if (dfsBoard[nx][ny] == EMPTY)
             {
                 liberties++;
                 dfsStatus[nx][ny] = dfsMark;
             }
-            else if (board[nx][ny] == dfsColor)
+            else if (dfsBoard[nx][ny] == dfsColor)
                 liberties += libertyDfs(nx,ny);
         }
     }
@@ -190,97 +191,99 @@ function otherPlayer(player) {
         throw "Assertion: el jugador solo puede ser blanco o negro! Es en su lugar " + player;
 }
 
-function makeMove(x,y) {
-    if (inRange(x,y)) {
-        if (board[x][y] == KOBAN)
+function move(board, x,y) {
+    if (!inRange(x,y))
+        return {"status" : "OUT_OF_RANGE"};
+    if (board[x][y] == KOBAN)
+        return {"status" :  "No se puede jugar en esa intersección debido a la regla del Ko: se repetiría la posición del tablero."};
+    if (board[x][y] != EMPTY)
+        return {"status" : "Solamente se puede jugar en una intersección vacía del tablero."};
+    
+    board = boardCopy(board);
+    
+    // Clear the koban
+    var kobanX = null, kobanY = null;
+    for (var i = 0; i < BOARD_SIZE; i++)
+    for (var j = 0; j < BOARD_SIZE; j++)
+        if (board[i][j] == KOBAN)
         {
-            alertUser("No se puede jugar en esa intersección debido a la regla del Ko: se repetiría la posición del tablero.");
-            return;
+            board[i][j] = EMPTY;
+            kobanX = i;
+            kobanY = j;
         }
-        else if (board[x][y] != EMPTY)
-        {
-            alertUser("Solamente se puede jugar en una intersección vacía del tablero.");
-            return;
+    
+    clearDfsStatus();
+    
+    var dirAtari = [false, false, false, false];
+    var atari = [false, false, false, false];
+    var playerSafe = false;
+    
+    for (var dir = 0; dir < 4; dir++) {
+        var nx = x + dx[dir];
+        var ny = y + dy[dir];
+        if (inRange(nx,ny) && board[nx][ny] == EMPTY)
+            playerSafe = true;
+        if (inRange(nx,ny) && dfsStatus[nx][ny] == 0 && board[nx][ny] != EMPTY) {
+            dfsColor = board[nx][ny];
+            dfsMark = dir+1;
+            dfsBoard = board;
+            if (libertyDfs(nx,ny) == 1) {
+                dirAtari[dir] = true;
+                atari[dfsColor] = true;
+            }
+            else if (dfsColor == currentPlayer)
+                playerSafe = true;
         }
-        
-        // Clear the koban
-        var kobanX = null, kobanY = null;
+    }
+    
+    if (!playerSafe && !atari[otherPlayer()])
+        return {"status" : "No se puede jugar en esa intersección debido a la regla de no suicidio: la jugada crearía un grupo propio sin libertades."};
+    
+    // The move is valid
+    
+    board[x][y] = currentPlayer;
+    
+    var captures = 0;
+    var captureX, captureY;
+    if (atari[otherPlayer()])
+    {
         for (var i = 0; i < BOARD_SIZE; i++)
         for (var j = 0; j < BOARD_SIZE; j++)
-            if (board[i][j] == KOBAN)
+            if (dfsStatus[i][j] > 0 && board[i][j] == otherPlayer() && dirAtari[dfsStatus[i][j] - 1])
             {
                 board[i][j] = EMPTY;
-                kobanX = i;
-                kobanY = j;
+                captureX = i;
+                captureY = j;
+                captures++;
             }
-        
-        clearDfsStatus();
-        
-        var dirAtari = [false, false, false, false];
-        var atari = [false, false, false, false];
-        var playerSafe = false;
-        
+    }
+
+    if (captures == 1) {
+        // Check for lone stone
+        var loneStone = true;
         for (var dir = 0; dir < 4; dir++) {
             var nx = x + dx[dir];
             var ny = y + dy[dir];
-            if (inRange(nx,ny) && board[nx][ny] == EMPTY)
-                playerSafe = true;
-            if (inRange(nx,ny) && dfsStatus[nx][ny] == 0 && board[nx][ny] != EMPTY) {
-                dfsColor = board[nx][ny];
-                dfsMark = dir+1;
-                if (libertyDfs(nx,ny) == 1) {
-                    dirAtari[dir] = true;
-                    atari[dfsColor] = true;
-                }
-                else if (dfsColor == currentPlayer)
-                    playerSafe = true;
-            }
+            if (inRange(nx,ny) && (nx != captureX || ny != captureY) && (board[nx][ny] != otherPlayer()))
+                loneStone = false;
         }
-        
-        if (!playerSafe && !atari[otherPlayer()])
-        {
-            alertUser("No se puede jugar en esa intersección debido a la regla de no suicidio: la jugada crearía un grupo propio sin libertades.");
-            if (kobanX !== null)
-                board[kobanX][kobanY] = KOBAN;
-            return;
-        }
-        
-        // The move is valid
-        
-        board[x][y] = currentPlayer;
-        
-        var captures = 0;
-        var captureX, captureY;
-        if (atari[otherPlayer()])
-        {
-            for (var i = 0; i < BOARD_SIZE; i++)
-            for (var j = 0; j < BOARD_SIZE; j++)
-                if (dfsStatus[i][j] > 0 && board[i][j] == otherPlayer() && dirAtari[dfsStatus[i][j] - 1])
-                {
-                    board[i][j] = EMPTY;
-                    captureX = i;
-                    captureY = j;
-                    captures++;
-                }
-        }
+        if (loneStone)
+            board[captureX][captureY] = KOBAN;
+    }
+    
+    return {"status" : "OK", "board" : board};
+}
 
-        if (captures == 1) {
-            // Check for lone stone
-            var loneStone = true;
-            for (var dir = 0; dir < 4; dir++) {
-                var nx = x + dx[dir];
-                var ny = y + dy[dir];
-                if (inRange(nx,ny) && (nx != captureX || ny != captureY) && (board[nx][ny] != otherPlayer()))
-                    loneStone = false;
-            }
-            if (loneStone)
-                board[captureX][captureY] = KOBAN;
-        }
-
-        boardHistory.push(boardCopy());
+function makeMove(x,y) {
+    var moveResult = move(globalBoard, x,y);
+    if (moveResult["status"] == "OK") {
+        globalBoard = moveResult["board"];
+        boardHistory.push(boardCopy(globalBoard));
         moveHistory.push({"color" : currentPlayer, "x" : x, "y" : y});
         currentPlayer = otherPlayer();
     }
+    else if (moveResult["status"] != "OUT_OF_RANGE")
+        alertUser(moveResult["status"]);
 }
 
 var gliftDiv = document.getElementById("gliftDiv");
