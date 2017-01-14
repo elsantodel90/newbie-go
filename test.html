@@ -306,42 +306,79 @@ function makeMove(x,y) {
 
 var gliftDiv = document.getElementById("gliftDiv");
 
-function getAtariGoAIMove(board, player) {
-    var validMove = null;
-    var options = [];
-    for (var i =0; i< BOARD_SIZE; i++)
-    for (var j =0; j< BOARD_SIZE; j++) {
-        var moveResult = move(board, player, i,j);
-        var moveDescription = {"x" : i, "y" : j, "newBoard" : moveResult["board"]};
-        if (moveResult["status"] == "OK" && moveResult["captures"] > 0)
-            return [moveDescription];
-        if (moveResult["status"] == "OK") {
-            if (validMove === null)
-                validMove = moveDescription;
-            var badMove = false;
-            for (var i2 =0; i2< BOARD_SIZE; i2++)
-            for (var j2 =0; j2< BOARD_SIZE; j2++) {
-                var moveResult2 = move(moveResult["board"], otherPlayer(player), i2,j2);
-                if (moveResult2["status"] == "OK" && moveResult2["captures"] > 0)
-                {
-                    badMove = true;
-                    i2 = BOARD_SIZE;
-                    j2 = BOARD_SIZE;
+function playerSign(player) {
+    if (player == BLACK)
+        return 1.0;
+    else
+        return -1.0;
+}
+
+var MONTECARLO_PLAYOUTS = 25;
+
+function getAtariGoAIMove(board, player, montecarloPlayout) {
+    while (true)
+    {
+        var validMove = null;
+        var bestMove, bestScore = null;
+        var options = [];
+        for (var i =0; i< BOARD_SIZE; i++)
+        for (var j =0; j< BOARD_SIZE; j++) {
+            var moveResult = move(board, player, i,j);
+            var moveDescription = {"x" : i, "y" : j, "newBoard" : moveResult["board"]};
+            if (moveResult["status"] == "OK" && moveResult["captures"] > 0) {
+                if (montecarloPlayout)
+                    return playerSign(player);
+                else
+                    return moveDescription;
+            }
+            if (moveResult["status"] == "OK") {
+                if (validMove === null)
+                    validMove = moveDescription;
+                if (montecarloPlayout)
+                    options.push(moveDescription);
+                else {
+                    var badMove = false;
+                    for (var i2 =0; i2< BOARD_SIZE; i2++)
+                    for (var j2 =0; j2< BOARD_SIZE; j2++) {
+                        var moveResult2 = move(moveResult["board"], otherPlayer(player), i2,j2);
+                        if (moveResult2["status"] == "OK" && moveResult2["captures"] > 0)
+                        {
+                            badMove = true;
+                            i2 = BOARD_SIZE;
+                            j2 = BOARD_SIZE;
+                        }
+                    }
+                    if (!badMove) {
+                        options.push(moveDescription);
+                        var moveScore = 0.0;
+                        for (var t = 0; t < MONTECARLO_PLAYOUTS; t++)
+                            moveScore += getAtariGoAIMove(board, player, true);
+                        moveScore *= playerSign(player);
+                        if (bestScore === null || moveScore > bestScore) {
+                            bestScore = moveScore;
+                            bestMove = moveDescription;
+                        }
+                    }
                 }
             }
-            if (!badMove)
-                options.push(moveDescription);
         }
+        if (options.length == 0) {
+            if (montecarloPlayout)
+                return -playerSign(player);
+            else
+                return validMove;
+        }
+        if (montecarloPlayout) {
+            board = options[Math.floor(Math.random()*options.length)]["newBoard"];
+            player = otherPlayer(player);
+        }
+        else
+            return bestMove;
     }
-    if (options.length > 0)
-        return options;
-    else
-        return [validMove];
 }
 
 function makeAIMove() {
-    var options = getAtariGoAIMove(globalBoard, currentPlayer);
-    var aiMove = options[Math.floor(Math.random()*options.length)];
+    var aiMove = getAtariGoAIMove(globalBoard, currentPlayer, false);
     makeMove(aiMove.x,aiMove.y);
     drawBoard();
 }
