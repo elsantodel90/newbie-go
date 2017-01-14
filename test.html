@@ -68,6 +68,7 @@ function boardCopy(boardToCopy) {
 
 var boardHistory = [boardCopy(globalBoard)];
 var moveHistory = [];
+var humanPlayer = BLACK;
 
 
 function toLetter(index) {
@@ -271,7 +272,18 @@ function move(board, x,y) {
             board[captureX][captureY] = KOBAN;
     }
     
-    return {"status" : "OK", "board" : board};
+    return {"status" : "OK", "board" : board, "captures" : captures};
+}
+
+function showMessageFunction(humanWins) {
+    if (humanWins)
+        return function() {
+            alertUser("¡VICTORIA!");
+        };
+    else
+        return function() {
+            alertUser("DERROTA :(");
+        };
 }
 
 function makeMove(x,y) {
@@ -280,6 +292,8 @@ function makeMove(x,y) {
         globalBoard = moveResult["board"];
         boardHistory.push(boardCopy(globalBoard));
         moveHistory.push({"color" : currentPlayer, "x" : x, "y" : y});
+        if (moveResult["captures"] > 0)
+            setTimeout(showMessageFunction(currentPlayer == humanPlayer) , 100);
         currentPlayer = otherPlayer();
     }
     else if (moveResult["status"] != "OUT_OF_RANGE")
@@ -288,13 +302,30 @@ function makeMove(x,y) {
 
 var gliftDiv = document.getElementById("gliftDiv");
 
+function makeAIMove() {
+    for (var i =0; i< BOARD_SIZE; i++)
+    for (var j =0; j< BOARD_SIZE; j++)
+    {
+        var moveResult = move(globalBoard, i,j);
+        if (moveResult["status"] == "OK")
+        {
+            makeMove(i,j);
+            drawBoard();
+            return;
+        }
+    }
+}
+
 function fooClick(event) {
-    var x = event.clientX - gliftDiv.offsetLeft;
-    var y = event.clientY - gliftDiv.offsetTop;
-    var moveX = Math.round((x - BOARD_X_START) / BOARD_X_CELL);
-    var moveY = Math.round((y - BOARD_Y_START) / BOARD_Y_CELL);
-    makeMove(moveX, moveY);
-    drawBoard();
+    if (currentPlayer == humanPlayer) {
+        var x = event.clientX - gliftDiv.offsetLeft;
+        var y = event.clientY - gliftDiv.offsetTop;
+        var moveX = Math.round((x - BOARD_X_START) / BOARD_X_CELL);
+        var moveY = Math.round((y - BOARD_Y_START) / BOARD_Y_CELL);
+        makeMove(moveX, moveY);
+        drawBoard();
+        setTimeout(makeAIMove, 100);
+    }
 }
 
 gliftDiv.addEventListener("click", fooClick);
