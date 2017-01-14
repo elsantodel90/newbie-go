@@ -94,6 +94,7 @@ function getSgfString() {
 var gliftWidget = null;
 
 function drawBoard() {
+    document.getElementById("boardText").innerHTML = getBoardHTML();
     if (gliftWidget !== null)
         gliftWidget.destroy();
     gliftWidget = glift.create({
@@ -276,12 +277,8 @@ function makeMove(x,y) {
                 board[captureX][captureY] = KOBAN;
         }
 
-        document.getElementById("boardText").innerHTML = getBoardHTML();
-        
         boardHistory.push(boardCopy());
         moveHistory.push({"color" : currentPlayer, "x" : x, "y" : y});
-        drawBoard();
-        
         currentPlayer = otherPlayer();
     }
 }
@@ -294,6 +291,7 @@ function fooClick(event) {
     var moveX = Math.round((x - BOARD_X_START) / BOARD_X_CELL);
     var moveY = Math.round((y - BOARD_Y_START) / BOARD_Y_CELL);
     makeMove(moveX, moveY);
+    drawBoard();
 }
 
 gliftDiv.addEventListener("click", fooClick);
