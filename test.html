@@ -297,6 +297,8 @@ function makeMove(x,y) {
         if (moveResult["captures"] > 0)
             setTimeout(showMessageFunction(currentPlayer == humanPlayer) , 100);
         currentPlayer = otherPlayer();
+        if (currentPlayer != humanPlayer)
+            setTimeout(makeAIMove, 100);
     }
     else if (moveResult["status"] != "OUT_OF_RANGE")
         alertUser(moveResult["status"]);
@@ -326,7 +328,6 @@ function fooClick(event) {
         var moveY = Math.round((y - BOARD_Y_START) / BOARD_Y_CELL);
         makeMove(moveX, moveY);
         drawBoard();
-        setTimeout(makeAIMove, 100);
     }
 }
 
