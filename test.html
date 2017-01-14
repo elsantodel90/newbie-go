@@ -315,70 +315,70 @@ function playerSign(player) {
 
 var MONTECARLO_PLAYOUTS = 25;
 
-function getAtariGoAIMove(board, player, montecarloPlayout) {
+function montecarloPlayout(board, player) {
     while (true)
     {
-        var validMove = null;
-        var bestMove, bestScore = null;
         var options = [];
         for (var i =0; i< BOARD_SIZE; i++)
         for (var j =0; j< BOARD_SIZE; j++) {
             var moveResult = move(board, player, i,j);
             var moveDescription = {"x" : i, "y" : j, "newBoard" : moveResult["board"]};
             if (moveResult["status"] == "OK" && moveResult["captures"] > 0) {
-                if (montecarloPlayout)
-                    return playerSign(player);
-                else
-                    return moveDescription;
+                return playerSign(player);
             }
-            if (moveResult["status"] == "OK") {
-                if (validMove === null)
-                    validMove = moveDescription;
-                if (montecarloPlayout)
-                    options.push(moveDescription);
-                else {
-                    var badMove = false;
-                    for (var i2 =0; i2< BOARD_SIZE; i2++)
-                    for (var j2 =0; j2< BOARD_SIZE; j2++) {
-                        var moveResult2 = move(moveResult["board"], otherPlayer(player), i2,j2);
-                        if (moveResult2["status"] == "OK" && moveResult2["captures"] > 0)
-                        {
-                            badMove = true;
-                            i2 = BOARD_SIZE;
-                            j2 = BOARD_SIZE;
-                        }
-                    }
-                    if (!badMove) {
-                        options.push(moveDescription);
-                        var moveScore = 0.0;
-                        for (var t = 0; t < MONTECARLO_PLAYOUTS; t++)
-                            moveScore += getAtariGoAIMove(board, player, true);
-                        moveScore *= playerSign(player);
-                        if (bestScore === null || moveScore > bestScore) {
-                            bestScore = moveScore;
-                            bestMove = moveDescription;
-                        }
-                    }
-                }
-            }
+            if (moveResult["status"] == "OK")
+                options.push(moveDescription);
         }
-        if (options.length == 0) {
-            if (montecarloPlayout)
-                return -playerSign(player);
-            else
-                return validMove;
-        }
-        if (montecarloPlayout) {
-            board = options[Math.floor(Math.random()*options.length)]["newBoard"];
-            player = otherPlayer(player);
-        }
-        else
-            return bestMove;
+        if (options.length == 0)
+            return -playerSign(player);
+        board = options[Math.floor(Math.random()*options.length)]["newBoard"];
+        player = otherPlayer(player);
     }
 }
 
+function getAtariGoAIMove(board, player) {
+    var validMove = null;
+    var bestMove = null, bestScore = null;
+    for (var i =0; i< BOARD_SIZE; i++)
+    for (var j =0; j< BOARD_SIZE; j++) {
+        var moveResult = move(board, player, i,j);
+        var moveDescription = {"x" : i, "y" : j, "newBoard" : moveResult["board"]};
+        if (moveResult["status"] == "OK" && moveResult["captures"] > 0)
+            return moveDescription;
+        if (moveResult["status"] == "OK") {
+            if (validMove === null)
+                validMove = moveDescription;
+            var badMove = false;
+            for (var i2 =0; i2< BOARD_SIZE; i2++)
+            for (var j2 =0; j2< BOARD_SIZE; j2++) {
+                var moveResult2 = move(moveResult["board"], otherPlayer(player), i2,j2);
+                if (moveResult2["status"] == "OK" && moveResult2["captures"] > 0)
+                {
+                    badMove = true;
+                    i2 = BOARD_SIZE;
+                    j2 = BOARD_SIZE;
+                }
+            }
+            if (!badMove) {
+                var moveScore = 0.0;
+                for (var t = 0; t < MONTECARLO_PLAYOUTS; t++)
+                    moveScore += montecarloPlayout(board, player);
+                moveScore *= playerSign(player);
+                if (bestScore === null || moveScore > bestScore) {
+                    bestScore = moveScore;
+                    bestMove = moveDescription;
+                }
+            }
+        }
+    }
+    if (bestMove === null)
+        return validMove;
+    else
+        return bestMove;
+}
+
 function makeAIMove() {
-    var aiMove = getAtariGoAIMove(globalBoard, currentPlayer, false);
+    var aiMove = getAtariGoAIMove(globalBoard, currentPlayer);
     makeMove(aiMove.x,aiMove.y);
     drawBoard();
 }
