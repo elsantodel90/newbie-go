@@ -185,7 +185,7 @@ function libertyDfs(x,y) {
 
 function otherPlayer(player) {
     if (player === undefined)
-        player = currentPlayer;
+        throw "Assertion: hay que pasarle parametro a otherPlayer!";
     if (player == BLACK)
         return WHITE;
     else if (player == WHITE)
@@ -194,7 +194,7 @@ function otherPlayer(player) {
         throw "Assertion: el jugador solo puede ser blanco o negro! Es en su lugar " + player;
 }
 
-function move(board, x,y) {
+function move(board, player, x,y) {
     if (!inRange(x,y))
         return {"status" : "OUT_OF_RANGE"};
     if (board[x][y] == KOBAN)
@@ -234,25 +234,25 @@ function move(board, x,y) {
                 dirAtari[dir] = true;
                 atari[dfsColor] = true;
             }
-            else if (dfsColor == currentPlayer)
+            else if (dfsColor == player)
                 playerSafe = true;
         }
     }
     
-    if (!playerSafe && !atari[otherPlayer()])
+    if (!playerSafe && !atari[otherPlayer(player)])
         return {"status" : "No se puede jugar en esa intersección debido a la regla de no suicidio: la jugada crearía un grupo propio sin libertades."};
     
     // The move is valid
     
-    board[x][y] = currentPlayer;
+    board[x][y] = player;
     
     var captures = 0;
     var captureX, captureY;
-    if (atari[otherPlayer()])
+    if (atari[otherPlayer(player)])
     {
         for (var i = 0; i < BOARD_SIZE; i++)
         for (var j = 0; j < BOARD_SIZE; j++)
-            if (dfsStatus[i][j] > 0 && board[i][j] == otherPlayer() && dirAtari[dfsStatus[i][j] - 1])
+            if (dfsStatus[i][j] > 0 && board[i][j] == otherPlayer(player) && dirAtari[dfsStatus[i][j] - 1])
             {
                 board[i][j] = EMPTY;
                 captureX = i;
@@ -267,7 +267,7 @@ function move(board, x,y) {
         for (var dir = 0; dir < 4; dir++) {
             var nx = x + dx[dir];
             var ny = y + dy[dir];
-            if (inRange(nx,ny) && (nx != captureX || ny != captureY) && (board[nx][ny] != otherPlayer()))
+            if (inRange(nx,ny) && (nx != captureX || ny != captureY) && (board[nx][ny] != otherPlayer(player)))
                 loneStone = false;
         }
         if (loneStone)
@@ -289,14 +289,14 @@ function showMessageFunction(humanWins) {
 }
 
 function makeMove(x,y) {
-    var moveResult = move(globalBoard, x,y);
+    var moveResult = move(globalBoard, currentPlayer, x,y);
     if (moveResult["status"] == "OK") {
         globalBoard = moveResult["board"];
         boardHistory.push(boardCopy(globalBoard));
         moveHistory.push({"color" : currentPlayer, "x" : x, "y" : y});
         if (moveResult["captures"] > 0)
             setTimeout(showMessageFunction(currentPlayer == humanPlayer) , 100);
-        currentPlayer = otherPlayer();
+        currentPlayer = otherPlayer(currentPlayer);
         if (currentPlayer != humanPlayer)
             setTimeout(makeAIMove, 100);
     }
@@ -306,18 +306,41 @@ function makeMove(x,y) {
 
 var gliftDiv = document.getElementById("gliftDiv");
 
-function makeAIMove() {
+function getAtariGoAIMove(board, player) {
+    var bestMoveX = null, bestMoveY = null, bestMoveScore = null;
     for (var i =0; i< BOARD_SIZE; i++)
-    for (var j =0; j< BOARD_SIZE; j++)
-    {
-        var moveResult = move(globalBoard, i,j);
-        if (moveResult["status"] == "OK")
-        {
-            makeMove(i,j);
-            drawBoard();
-            return;
+    for (var j =0; j< BOARD_SIZE; j++) {
+        var moveResult = move(board, player, i,j);
+        if (moveResult["status"] == "OK" && moveResult["captures"] > 0)
+            return {"x" : i, "y" : j};
+        if (moveResult["status"] == "OK") {
+            if (bestMoveX === null) {
+                bestMoveX = i;
+                bestMoveY = j;
+            }
+            var badMove = false;
+            for (var i2 =0; i2< BOARD_SIZE; i2++)
+            for (var j2 =0; j2< BOARD_SIZE; j2++) {
+                var moveResult2 = move(moveResult["board"], otherPlayer(player), i2,j2);
+                if (moveResult2["status"] == "OK" && moveResult2["captures"] > 0)
+                {
+                    badMove = true;
+                    i2 = BOARD_SIZE;
+                    j2 = BOARD_SIZE;
+                }
+            }
+            if (!badMove) {
+                return {"x" : i, "y" : j};
+            }
         }
     }
+    return {"x" : bestMoveX, "y" : bestMoveY};
+}
+
+function makeAIMove() {
+    var aiMove = getAtariGoAIMove(globalBoard, currentPlayer);
+    makeMove(aiMove.x,aiMove.y);
+    drawBoard();
 }
 
 function fooClick(event) {
