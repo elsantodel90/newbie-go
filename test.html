@@ -330,7 +330,8 @@ function getAtariGoAIMove(board, player) {
                 }
             }
             if (!badMove) {
-                return {"x" : i, "y" : j};
+                bestMoveX = i;
+                bestMoveY = j;
             }
         }
     }
