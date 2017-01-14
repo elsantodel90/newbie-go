@@ -25,8 +25,13 @@
           width:500px;
           height:500px;
       }
+      #boardText{
+          font-family : courier;
+      }
   </style>
     
+  <div id="boardText">
+  </div>
   <div id="gliftDiv">
   </div>
 
@@ -107,13 +112,178 @@ function drawBoard() {
     });
 }
 
-function makeMove(color, x,y) {
-    
-    board[x][y] = color;
-    // TODO: ACTUALIZAR EL TABLERO ACORDE A LA JUGADA! Y NO PERMITIR SI ES INVALIDA.
-    boardHistory.push(boardCopy());
-    moveHistory.push({"color" : color, "x" : x, "y" : y});
-    drawBoard();
+function cellToChar(cell) {
+    if (cell == EMPTY)
+        return '.';
+    else if (cell == BLACK)
+        return 'B';
+    else if (cell == WHITE)
+        return 'W';
+    else if (cell == KOBAN)
+        return 'K';
+    else
+        throw "Assertion: contenido de intersección inválida. " + cell;
+}
+
+function getBoardHTML() {
+    var ret = "";
+    for (var i = 0; i < BOARD_SIZE; i++) {
+        for (var j = 0; j < BOARD_SIZE; j++)
+            ret += cellToChar(board[j][i]);
+        ret += "<br>";
+    }
+    return ret;
+}
+
+function alertUser(message) {
+    alert(message);
+}
+
+var dx = [0,0,1,-1];
+var dy = [1,-1,0,0];
+
+var dfsStatus;
+var dfsColor;
+var dfsMark;
+
+function clearDfsStatus() {
+    dfsStatus = []; 
+    for (var i = 0; i < BOARD_SIZE; i++) {
+        dfsStatus.push([]);
+        for (var j = 0; j < BOARD_SIZE; j++)
+            dfsStatus[i].push(0);
+    }
+}
+
+function inRange(x,y) {
+    return 0 <= x && x < BOARD_SIZE && 0 <= y && y < BOARD_SIZE;
+}
+
+function libertyDfs(x,y) {
+    dfsStatus[x][y] = dfsMark;
+    var liberties = 0;
+    for (var dir = 0; dir < 4; dir++) {
+        var nx = x + dx[dir];
+        var ny = y + dy[dir];
+        if (inRange(nx,ny) && dfsStatus[nx][ny] != dfsMark) {
+            if (board[nx][ny] == EMPTY)
+            {
+                liberties++;
+                dfsStatus[nx][ny] = dfsMark;
+            }
+            else if (board[nx][ny] == dfsColor)
+                liberties += libertyDfs(nx,ny);
+        }
+    }
+    return liberties;
+}
+
+function otherPlayer(player) {
+    if (player === undefined)
+        player = currentPlayer;
+    if (player == BLACK)
+        return WHITE;
+    else if (player == WHITE)
+        return BLACK;
+    else
+        throw "Assertion: el jugador solo puede ser blanco o negro! Es en su lugar " + player;
+}
+
+function makeMove(x,y) {
+    if (inRange(x,y)) {
+        if (board[x][y] == KOBAN)
+        {
+            alertUser("No se puede jugar en esa intersección debido a la regla del Ko: se repetiría la posición del tablero.");
+            return;
+        }
+        else if (board[x][y] != EMPTY)
+        {
+            alertUser("Solamente se puede jugar en una intersección vacía del tablero.");
+            return;
+        }
+        
+        // Clear the koban
+        var kobanX = null, kobanY = null;
+        for (var i = 0; i < BOARD_SIZE; i++)
+        for (var j = 0; j < BOARD_SIZE; j++)
+            if (board[i][j] == KOBAN)
+            {
+                board[i][j] = EMPTY;
+                kobanX = i;
+                kobanY = j;
+            }
+        
+        clearDfsStatus();
+        
+        var dirAtari = [false, false, false, false];
+        var atari = [false, false, false, false];
+        var playerSafe = false;
+        
+        for (var dir = 0; dir < 4; dir++) {
+            var nx = x + dx[dir];
+            var ny = y + dy[dir];
+            if (inRange(nx,ny) && board[nx][ny] == EMPTY)
+                playerSafe = true;
+            if (inRange(nx,ny) && dfsStatus[nx][ny] == 0 && board[nx][ny] != EMPTY) {
+                dfsColor = board[nx][ny];
+                dfsMark = dir+1;
+                if (libertyDfs(nx,ny) == 1) {
+                    dirAtari[dir] = true;
+                    atari[dfsColor] = true;
+                }
+                else if (dfsColor == currentPlayer)
+                    playerSafe = true;
+            }
+        }
+        
+        if (!playerSafe && !atari[otherPlayer()])
+        {
+            alertUser("No se puede jugar en esa intersección debido a la regla de no suicidio: la jugada crearía un grupo propio sin libertades.");
+            if (kobanX !== null)
+                board[kobanX][kobanY] = KOBAN;
+            return;
+        }
+        
+        // The move is valid
+        
+        board[x][y] = currentPlayer;
+        
+        var captures = 0;
+        var captureX, captureY;
+        if (atari[otherPlayer()])
+        {
+            for (var i = 0; i < BOARD_SIZE; i++)
+            for (var j = 0; j < BOARD_SIZE; j++)
+                if (dfsStatus[i][j] > 0 && board[i][j] == otherPlayer() && dirAtari[dfsStatus[i][j] - 1])
+                {
+                    board[i][j] = EMPTY;
+                    captureX = i;
+                    captureY = j;
+                    captures++;
+                }
+        }
+
+        if (captures == 1) {
+            // Check for lone stone
+            var loneStone = true;
+            for (var dir = 0; dir < 4; dir++) {
+                var nx = x + dx[dir];
+                var ny = y + dy[dir];
+                if (inRange(nx,ny) && (nx != captureX || ny != captureY) && (board[nx][ny] != otherPlayer()))
+                    loneStone = false;
+            }
+            if (loneStone)
+                board[captureX][captureY] = KOBAN;
+        }
+
+        document.getElementById("boardText").innerHTML = getBoardHTML();
+        
+        boardHistory.push(boardCopy());
+        moveHistory.push({"color" : currentPlayer, "x" : x, "y" : y});
+        drawBoard();
+        
+        currentPlayer = otherPlayer();
+    }
 }
 
 var gliftDiv = document.getElementById("gliftDiv");
@@ -123,16 +293,7 @@ function fooClick(event) {
     var y = event.clientY - gliftDiv.offsetTop;
     var moveX = Math.round((x - BOARD_X_START) / BOARD_X_CELL);
     var moveY = Math.round((y - BOARD_Y_START) / BOARD_Y_CELL);
-    if (0 <= moveX && moveX < BOARD_SIZE &&
-        0 <= moveY && moveY < BOARD_SIZE) {
-        makeMove(currentPlayer, moveX, moveY);
-        if (currentPlayer == BLACK)
-            currentPlayer = WHITE;
-        else if (currentPlayer == WHITE)
-            currentPlayer = BLACK;
-        else
-            throw "Assertion: el jugador actual solo puede ser blanco o negro! Es en su lugar " + currentPlayer;
-    }
+    makeMove(moveX, moveY);
 }
 
 gliftDiv.addEventListener("click", fooClick);
