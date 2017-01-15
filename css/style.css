@@ -1,0 +1,84 @@
+body {
+    background-color: #FAFFDD;
+}
+
+div.mainrules {
+    font-size: medium;
+    color: black;
+    font-family: Verdana, Geneva, sans-serif;
+}
+
+div.mainrules > ul > li {
+    color: green;
+    font-size: large;
+}
+
+strong {
+    font-weight: bold;
+    background-color:transparent; 
+}
+
+mark {
+    font-weight: bold;
+    background-color:transparent; 
+    color: #770000;
+}
+
+h1 {
+    color: #D3123C;
+    font-size: xx-large;
+    text-align: center;
+}
+
+h2 {
+    color: black;
+    font-size: large;
+    text-align: left;
+}
+
+div.footnotes {
+    background-color: #D8DDBB;
+    font-size: small;
+    color: black;
+}
+
+span.note {
+    background-color: #75DD89;
+    font-size: small;
+    color: black;
+}
+
+div.block-citation h1 {
+    text-align: left;
+    font-size: medium;
+    color: black;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid black;
+}
+
+th {
+    background-color: green;
+    color: white;
+}
+
+
+.table
+{
+   display:table;
+}
+
+.table-row
+{
+   display:table-row;
+}
+
+.table-cell
+{
+   display:table-cell;
+}

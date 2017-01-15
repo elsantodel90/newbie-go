@@ -19,27 +19,75 @@
 
 <body>
   <script src="js/glift_1_1_2.min.js"></script>
-  
+  <link rel = "stylesheet" type = "text/css" href = "css/style.css" />
   <style type="text/css">
       #gliftDiv {
           width:500px;
           height:500px;
       }
   </style>
-  <div>
-      <h1>Ejemplo de atari-go</h1>
-      <p> Se recomiendan valores entre 1 y 10000 para la fuerza. Atención: el tiempo que toma cada jugada es aproximadamente proporcional a la fuerza indicada. </p>
+  <div class="mainrules">
+      <h1>Atari-go</h1>
+      <p> El Atari-go es una variante del Go particularmente sencilla, muy utilizada en la enseñanza para comenzar a comprender los elementos más básicos del juego.
+          La idea es que se juega al igual que el Go en un tablero cuadriculado, colocando <strong>piedras</strong> de colores (<strong>blancas</strong> y <strong>negras</strong>) sobre las <strong>intersecciones</strong> del mismo. Nosotros utilizaremos un tablero de 9x9 intersecciones.
+      </p>
+      <ul>
+      <li>Elementos de juego</li>
+          <ul><li> El Atari-go es un juego de dos <strong>jugadores</strong>. Un jugador utiliza las <strong>piedras negras</strong>, y el otro las <strong>blancas</strong>.</li>
+              <li> Se juega sobre un tablero de 9x9 <strong>intersecciones</strong>.</li>
+              <li> A lo largo del juego, en cada momento algunas intersecciones estarán ocupadas por piedras negras, algunas por piedras blancas, y las restantes se encontrarán vacías.</li>
+              <li> Inicialmente, el tablero se encuentra vacío.</li>
+              <li> Durante el juego, llamamos un <strong>grupo</strong> de un jugador, a un conjunto maximal de piedras de su color conectadas entre sí horizontal o verticalmente.</li>
+              <li> Decimos que una intersección vacía del tablero es una <strong>libertad</strong> de un grupo, cuando es adyacente horizontal o verticalmente a alguna de las piedras del grupo.</li>
+          </ul>
+      <li>Regla de juego y alternancia</li>
+          <ul><li>Comienza el jugador que utiliza las piedras <strong>negras</strong>.
+                  Los jugadores <strong>se alternan</strong> realizando jugadas una vez cada uno. Una jugada válida consiste en <strong>colocar una piedra del color del jugador sobre
+                  una intersección vacía</strong> del tablero.
+          </li></ul>
+      <li>Regla de captura</li>
+          <ul><li>Si luego de que un jugador realice una jugada, uno o más de los grupos de su rival queda sin libertades, dichos grupos son <strong>capturados</strong> y se sacan todas sus piedras del tablero.</li>
+              <li>Notar que en la siguiente posición, si blanco juega en <em>A</em>, logra capturar las dos piedras negras.<br>
+                    <img src="images/captura.png"> </li>
+              <li>Notar que la jugada indicada con <em>a</em> sería válida para negro, y al realizarla captura la piedra blanca marcada con un círculo.<br>
+                    <img src="images/ko.png"> </li>
+          </ul>
+      <li>Regla de no suicidio</li>
+          <ul><li>Si luego de que un jugador realice una jugada (incluyendo de ser necesaria, la aplicación de la regla de captura) un grupo del propio jugador queda sin libertades, tal jugada se considera suicidio y está <strong>prohibida</strong>.</li>
+              <li>Por ejemplo, la jugada indicada con <em>A</em> sería inválida para blanco, pues sus piedras del rincón se quedarían sin libertades.<br>
+                    <img src="images/suicidio.png"> </li>
+          </ul>
+      <li>Objetivo:</li>
+          <ul><li><strong>El primer jugador en capturar un grupo a su rival gana</strong>. Si un jugador no tiene jugadas válidas, pierde inmediatamente.</li></ul>
+      </ul>
   </div>
   <div id="controls">
-      <form>
-            <input type="text" id="strengthTextBox" value=100>
+      <form class="table">
+          <span class="table-row">
+           <span class="table-cell">
+            Fuerza:
+            <input type="text" id="strengthTextBox" value=100 style="width:50px;float:right;"><br>
             <input id="setStrengthButton" type="button" value="Cambiar fuerza" />
+           </span>
+           <span class="table-cell">
+            <span class="note">Se recomiendan valores entre 1 y 10000 para la fuerza.
+                <strong>Atención</strong>: el tiempo que toma cada jugada es aproximadamente proporcional a la fuerza indicada.</span>
+           </span>
+          </span>
       </form>
   </div>
   <div>
       <h2 id="atariGoHeader">AtariGo: Fuerza 100</h2>
   </div>
-  <div id="gliftDiv">
+  <div>
+      <div style="float: left;" id="gliftDiv">
+      </div>
+      <div style="float: left;  width:30px;">
+          &nbsp;
+      </div>
+      <div style="float: left;" id="extras">
+            <strong>TODO</strong>: Acá van los extras.
+      </div>
   </div>
   
   <script>
