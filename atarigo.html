@@ -822,8 +822,8 @@ function makeAIMove() {
 
 function fooClick(event) {
     if (currentPlayer == humanPlayer) {
-        var x = event.clientX - gliftDiv.offsetLeft;
-        var y = event.clientY - gliftDiv.offsetTop;
+        var x = event.pageX - gliftDiv.offsetLeft;
+        var y = event.pageY - gliftDiv.offsetTop;
         var moveX = Math.round((x - BOARD_X_START) / BOARD_X_CELL);
         var moveY = Math.round((y - BOARD_Y_START) / BOARD_Y_CELL);
         makeMove(moveX, moveY);
