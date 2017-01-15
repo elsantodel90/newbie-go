@@ -202,8 +202,6 @@ function move(board, player, x,y) {
     if (board[x][y] != EMPTY)
         return {"status" : "Solamente se puede jugar en una intersección vacía del tablero."};
     
-    board = boardCopy(board);
-    
     // Clear the koban
     var kobanX = null, kobanY = null;
     for (var i = 0; i < BOARD_SIZE; i++)
@@ -240,7 +238,11 @@ function move(board, player, x,y) {
     }
     
     if (!playerSafe && !atari[otherPlayer(player)])
+    {
+        if (kobanX !== null)
+            board[kobanX][kobanY] = KOBAN;
         return {"status" : "No se puede jugar en esa intersección debido a la regla de no suicidio: la jugada crearía un grupo propio sin libertades."};
+    }
     
     // The move is valid
     
@@ -291,7 +293,6 @@ function showMessageFunction(humanWins) {
 function makeMove(x,y) {
     var moveResult = move(globalBoard, currentPlayer, x,y);
     if (moveResult["status"] == "OK") {
-        globalBoard = moveResult["board"];
         boardHistory.push(boardCopy(globalBoard));
         moveHistory.push({"color" : currentPlayer, "x" : x, "y" : y});
         if (moveResult["captures"] > 0)
@@ -306,42 +307,311 @@ function makeMove(x,y) {
 
 var gliftDiv = document.getElementById("gliftDiv");
 
+function playerSign(player) {
+    if (player == BLACK)
+        return 1.0;
+    else
+        return -1.0;
+}
+
+var MONTECARLO_PLAYOUTS = 4000;
+
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+}
+
+var allBoardMoves = [];
+for (var i =0; i< BOARD_SIZE; i++)
+for (var j =0; j< BOARD_SIZE; j++)
+    allBoardMoves.push({"x" : i, "y" : j});
+
+var MAX_MONTECARLO_DEPTH = 10;
+
+function montecarloPlayout(board, player) {
+    // initial board has no good atari for us to win immediately
+    board = boardCopy(board);
+    var montecarloLength = 0;
+    while (true) {
+        montecarloLength++;
+        if (montecarloLength > MAX_MONTECARLO_DEPTH) {
+            // Liberty count
+            
+            var allBlackLiberties = [];
+            var allWhiteLiberties = [];
+            var markId = 0;
+            
+            clearDfsStatus();
+            for (var i =0; i< BOARD_SIZE; i++)
+            for (var j =0; j< BOARD_SIZE; j++) 
+            if (dfsStatus[i][j] == 0 && board[i][j] != EMPTY) {
+                dfsColor = board[i][j];
+                dfsMark = markId;
+                dfsBoard = board;
+                var gl = libertyDfs(i,j);
+                if (board[i][j] == WHITE)
+                    allWhiteLiberties.push(gl);
+                else
+                    allBlackLiberties.push(gl);
+                markId++;
+            }
+            
+            allBlackLiberties.sort();
+            allWhiteLiberties.sort();
+            
+            var blackLiberties = 0;
+            var w = 1.0;
+            for (var i = allBlackLiberties.length - 1; i >=0; i--) {
+                blackLiberties += allBlackLiberties[i] * w;
+                w /= 2.0;
+            }
+            
+            var whiteLiberties = 0;
+            w = 1.0;
+            for (var i = allWhiteLiberties.length - 1; i >=0; i--) {
+                whiteLiberties += allWhiteLiberties[i] * w;
+                w /= 2.0;
+            }
+            
+            var totalLiberties = blackLiberties + whiteLiberties;
+            return (playerSign(BLACK) * blackLiberties + playerSign(WHITE) * whiteLiberties) / (3*totalLiberties);
+        }
+        // Check atari situation
+        clearDfsStatus();
+        var atari = false;
+        var atariX = null;
+        var atariY = null;
+        var movesForAtari = [];
+        var groupId = 0;
+        
+        for (var i =0; i< BOARD_SIZE; i++)
+        for (var j =0; j< BOARD_SIZE; j++) 
+        if (dfsStatus[i][j] == 0 && board[i][j] != EMPTY) {
+            groupId++;
+            dfsColor = board[i][j];
+            dfsMark = groupId;
+            dfsBoard = board;
+            var gl = libertyDfs(i,j);
+            if (gl == 1) {
+                if (dfsColor == otherPlayer(player)) {
+                    return playerSign(player);
+                }
+                if (!atari) {
+                    atari = true;
+                    for (var i2 =0; i2< BOARD_SIZE; i2++)
+                    for (var j2 =0; j2< BOARD_SIZE; j2++)
+                    if (board[i2][j2] == EMPTY && dfsStatus[i2][j2] == dfsMark) {
+                        atariX = i2;
+                        atariY = j2;
+                    }
+                }
+            }
+            else if (gl == 2) {
+                for (var i2 =0; i2< BOARD_SIZE; i2++)
+                for (var j2 =0; j2< BOARD_SIZE; j2++)
+                if (board[i2][j2] == EMPTY && dfsStatus[i2][j2] == dfsMark)
+                    movesForAtari.push({"x" : i2, "y" : j2});
+            }
+        }
+        if (atariX !== null) {
+            var moveResult = move(board, player, atariX,atariY);
+            if (moveResult["status"] != "OK")
+                return -playerSign(player);
+        }
+        else {
+            var searchForMove = true;
+            if (movesForAtari.length > 0 && Math.random() > 0.1) {
+                var moveToDo = movesForAtari[Math.floor(Math.random() * movesForAtari.length)];
+                var moveResult = move(board, player, moveToDo.x,moveToDo.y);
+                if (moveResult["status"] == "OK")
+                    searchForMove = false;
+            }
+            if (searchForMove) {
+                // Choose random move
+                shuffleArray(allBoardMoves);
+                var moveFound = false;
+                for (var index =0; index < allBoardMoves.length; index++) {
+                    
+                    var i = allBoardMoves[index].x;
+                    var j = allBoardMoves[index].y;
+                    if (board[i][j] != EMPTY) continue;
+                    
+                    // Apply heuristics for "acceptable move"
+                                    
+                    var farAway = true;
+                    var FAR_DIST = 2;
+            outerFarAway:
+                    for (var nx = i-FAR_DIST; nx <= i+FAR_DIST; nx++)
+                    for (var ny = j-(FAR_DIST - Math.abs(nx-i)); ny <= j+(FAR_DIST - Math.abs(nx-i)); ny++) 
+                    if (inRange(nx,ny) && board[nx][ny] == player)
+                    {
+                        farAway = false;
+                        break outerFarAway;
+                    }
+                    if (farAway)
+                        continue; // Never play too far away from friendly stones
+                    
+                    var loneStone = true;
+            outerLoneStone: 
+                    for (var nx = i-1; nx <= i+1; nx++)
+                    for (var ny = j-1; ny <= j+1; ny++)
+                    if (inRange(nx,ny) && board[nx][ny] == player)
+                    {
+                        loneStone = false;
+                        break outerLoneStone;
+                    }
+                    if (loneStone && i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1)
+                        continue; // Never play on a border, unless there is a friendly stone in the immediate vicinity
+                    if (loneStone) {
+                        var stoneLiberties = 0;
+                        var enemyLiberties = 0;
+                        for (var dir = 0; dir < 4; dir++) {
+                            var nx = i + dx[dir];
+                            var ny = j + dy[dir];
+                            if (inRange(nx,ny)) {
+                                if (board[nx][ny] == EMPTY)
+                                    stoneLiberties++;
+                                else if (board[nx][ny] == otherPlayer(player)) {
+                                    var thisEnemyLiberties = 0;
+                                    for (var dir2 = 0; dir2 < 4; dir2++) {
+                                        var nx2 = nx + dx[dir];
+                                        var ny2 = ny + dy[dir];
+                                        if (inRange(nx2,ny2) && board[nx2][ny2] != player)
+                                            thisEnemyLiberties++;
+                                    }
+                                    if (thisEnemyLiberties > enemyLiberties)
+                                        enemyLiberties = thisEnemyLiberties;
+                                }
+                            }
+                        }
+                        if (stoneLiberties < 2)
+                            continue; // Illegal or self-atari
+                        if (stoneLiberties < enemyLiberties)
+                            continue; // Never play a lone stone having fewer liberties or friends than adjacent enemy stones
+                    }
+                    
+                    var moveResult = move(board, player, i,j);
+                    if (moveResult["status"] == "OK") {
+                        moveFound = true;
+                        break;
+                    }
+                }
+                if (!moveFound)
+                    return -playerSign(player);
+            }
+        }
+        player = otherPlayer(player);
+    }
+}
+
 function getAtariGoAIMove(board, player) {
     var validMove = null;
-    var options = [];
+    var bestMove = null, bestScore = null;
     for (var i =0; i< BOARD_SIZE; i++)
     for (var j =0; j< BOARD_SIZE; j++) {
-        var moveResult = move(board, player, i,j);
+
+        if (Math.random() > 0.1) {
+            var loneStone = true;
+    outerLoneStone: 
+            for (var nx = i-1; nx <= i+1; nx++)
+            for (var ny = j-1; ny <= j+1; ny++)
+            if (inRange(nx,ny) && board[nx][ny] != EMPTY)
+            {
+                loneStone = false;
+                break outerLoneStone;
+            }
+            if (loneStone)
+                continue;
+        }
+
+
+
+        // Apply heuristics for "acceptable move"
+                                                
+            var loneStone = true;
+    outerLoneStone: 
+            for (var nx = i-1; nx <= i+1; nx++)
+            for (var ny = j-1; ny <= j+1; ny++)
+            if (inRange(nx,ny) && board[nx][ny] == player)
+            {
+                loneStone = false;
+                break outerLoneStone;
+            }
+            if (loneStone && i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1)
+                continue; // Never play on a border, unless there is a friendly stone in the immediate vicinity
+            if (loneStone) {
+                var stoneLiberties = 0;
+                var enemyLiberties = 0;
+                for (var dir = 0; dir < 4; dir++) {
+                    var nx = i + dx[dir];
+                    var ny = j + dy[dir];
+                    if (inRange(nx,ny)) {
+                        if (board[nx][ny] == EMPTY)
+                            stoneLiberties++;
+                        else if (board[nx][ny] == otherPlayer(player)) {
+                            var thisEnemyLiberties = 0;
+                            for (var dir2 = 0; dir2 < 4; dir2++) {
+                                var nx2 = nx + dx[dir];
+                                var ny2 = ny + dy[dir];
+                                if (inRange(nx2,ny2) && board[nx2][ny2] != player)
+                                    thisEnemyLiberties++;
+                            }
+                            if (thisEnemyLiberties > enemyLiberties)
+                                enemyLiberties = thisEnemyLiberties;
+                        }
+                    }
+                }
+                if (stoneLiberties < 2)
+                    continue; // Illegal or self-atari
+                if (stoneLiberties < enemyLiberties)
+                    continue; // Never play a lone stone having fewer liberties or friends than adjacent enemy stones
+            }
+
+
+
+
+        var moveResult = move(boardCopy(board), player, i,j);
         var moveDescription = {"x" : i, "y" : j, "newBoard" : moveResult["board"]};
         if (moveResult["status"] == "OK" && moveResult["captures"] > 0)
-            return [moveDescription];
+            return moveDescription;
         if (moveResult["status"] == "OK") {
             if (validMove === null)
                 validMove = moveDescription;
             var badMove = false;
+        badMoveLoop:
             for (var i2 =0; i2< BOARD_SIZE; i2++)
             for (var j2 =0; j2< BOARD_SIZE; j2++) {
-                var moveResult2 = move(moveResult["board"], otherPlayer(player), i2,j2);
+                var moveResult2 = move(boardCopy(moveResult["board"]), otherPlayer(player), i2,j2);
                 if (moveResult2["status"] == "OK" && moveResult2["captures"] > 0)
                 {
                     badMove = true;
-                    i2 = BOARD_SIZE;
-                    j2 = BOARD_SIZE;
+                    break badMoveLoop;
                 }
             }
-            if (!badMove)
-                options.push(moveDescription);
+            if (!badMove) {
+                var moveScore = 0.0;
+                for (var t = 0; t < MONTECARLO_PLAYOUTS; t++)
+                    moveScore += montecarloPlayout(moveResult["board"], otherPlayer(player));
+                moveScore *= playerSign(player);
+                if (bestScore === null || moveScore > bestScore) {
+                    bestScore = moveScore;
+                    bestMove = moveDescription;
+                }
+            }
         }
     }
-    if (options.length > 0)
-        return options;
+    if (bestMove === null)
+        return validMove;
     else
-        return [validMove];
+        return bestMove;
 }
 
 function makeAIMove() {
-    var options = getAtariGoAIMove(globalBoard, currentPlayer);
-    var aiMove = options[Math.floor(Math.random()*options.length)];
+    var aiMove = getAtariGoAIMove(globalBoard, currentPlayer);
     makeMove(aiMove.x,aiMove.y);
     drawBoard();
 }
