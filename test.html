@@ -25,18 +25,23 @@
           width:500px;
           height:500px;
       }
-      #boardText{
-          font-family : courier;
-      }
   </style>
   <div>
       <h1>Ejemplo de atari-go</h1>
+      <p> Se recomiendan valores entre 1 y 10000 para la fuerza. Atención: el tiempo que toma cada jugada es aproximadamente proporcional a la fuerza indicada. </p>
   </div>
-  <div id="boardText">
+  <div id="controls">
+      <form>
+            <input type="text" id="strengthTextBox" value=100>
+            <input id="setStrengthButton" type="button" value="Cambiar fuerza" />
+      </form>
+  </div>
+  <div>
+      <h2 id="atariGoHeader">AtariGo: Fuerza 100</h2>
   </div>
   <div id="gliftDiv">
   </div>
-
+  
   <script>
 
 var BOARD_SIZE = 9;
@@ -97,7 +102,7 @@ function getSgfString() {
 var gliftWidget = null;
 
 function drawBoard() {
-    document.getElementById("boardText").innerHTML = getBoardHTML(globalBoard);
+    //document.getElementById("boardText").innerHTML = getBoardHTML(globalBoard);
     if (gliftWidget !== null)
         gliftWidget.destroy();
     gliftWidget = glift.create({
@@ -279,15 +284,32 @@ function move(board, player, x,y) {
     return {"status" : "OK", "board" : board, "captures" : captures};
 }
 
+function resetGame() {
+    currentPlayer = BLACK;
+    humanPlayer = otherPlayer(humanPlayer);
+    globalBoard = [];
+    for (var i = 0; i < BOARD_SIZE; i++) {
+        globalBoard.push([]);
+        for (var j = 0; j < BOARD_SIZE; j++)
+            globalBoard[i].push(EMPTY);
+    }
+    boardHistory = [boardCopy(globalBoard)];
+    moveHistory = [];
+    if (currentPlayer != humanPlayer)
+        setTimeout(makeAIMove, 100);
+}
+
 function showMessageFunction(humanWins) {
+    var message;
     if (humanWins)
-        return function() {
-            alertUser("¡VICTORIA!");
-        };
+        message = "¡VICTORIA!";
     else
-        return function() {
-            alertUser("DERROTA :(");
-        };
+        message = "DERROTA :(";
+    return function() {
+        alertUser(message);
+        resetGame();
+        drawBoard();
+    };
 }
 
 function makeMove(x,y) {
@@ -297,9 +319,11 @@ function makeMove(x,y) {
         moveHistory.push({"color" : currentPlayer, "x" : x, "y" : y});
         if (moveResult["captures"] > 0)
             setTimeout(showMessageFunction(currentPlayer == humanPlayer) , 100);
-        currentPlayer = otherPlayer(currentPlayer);
-        if (currentPlayer != humanPlayer)
-            setTimeout(makeAIMove, 100);
+        else {
+            currentPlayer = otherPlayer(currentPlayer);
+            if (currentPlayer != humanPlayer)
+                setTimeout(makeAIMove, 100);
+        }
     }
     else if (moveResult["status"] != "OUT_OF_RANGE")
         alertUser(moveResult["status"]);
@@ -314,7 +338,14 @@ function playerSign(player) {
         return -1.0;
 }
 
-var MONTECARLO_PLAYOUTS = 4000;
+var MONTECARLO_PLAYOUTS = 100;//4000;
+
+function setStrength() {
+    MONTECARLO_PLAYOUTS = parseInt(document.getElementById("strengthTextBox").value);
+    document.getElementById("atariGoHeader").innerHTML = "AtariGo: Fuerza " + MONTECARLO_PLAYOUTS;
+}
+
+document.getElementById("setStrengthButton").onclick = setStrength;
 
 function shuffleArray(array) {
     for (var i = array.length - 1; i > 0; i--) {
@@ -508,91 +539,186 @@ function montecarloPlayout(board, player) {
     }
 }
 
-function getAtariGoAIMove(board, player) {
-    var validMove = null;
-    var bestMove = null, bestScore = null;
-    for (var i =0; i< BOARD_SIZE; i++)
-    for (var j =0; j< BOARD_SIZE; j++) {
+var MINIMAX_EXPLORATION_PLIES = 2;
 
-        if (Math.random() > 0.1) {
-            var loneStone = true;
-    outerLoneStone: 
-            for (var nx = i-1; nx <= i+1; nx++)
-            for (var ny = j-1; ny <= j+1; ny++)
-            if (inRange(nx,ny) && board[nx][ny] != EMPTY)
-            {
-                loneStone = false;
-                break outerLoneStone;
-            }
-            if (loneStone)
-                continue;
-        }
-
-
-
-        // Apply heuristics for "acceptable move"
-                                                
-            var loneStone = true;
-    outerLoneStone: 
-            for (var nx = i-1; nx <= i+1; nx++)
-            for (var ny = j-1; ny <= j+1; ny++)
-            if (inRange(nx,ny) && board[nx][ny] == player)
-            {
-                loneStone = false;
-                break outerLoneStone;
-            }
-            if (loneStone && i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1)
-                continue; // Never play on a border, unless there is a friendly stone in the immediate vicinity
-            if (loneStone) {
-                var stoneLiberties = 0;
-                var enemyLiberties = 0;
-                for (var dir = 0; dir < 4; dir++) {
-                    var nx = i + dx[dir];
-                    var ny = j + dy[dir];
-                    if (inRange(nx,ny)) {
-                        if (board[nx][ny] == EMPTY)
-                            stoneLiberties++;
-                        else if (board[nx][ny] == otherPlayer(player)) {
-                            var thisEnemyLiberties = 0;
-                            for (var dir2 = 0; dir2 < 4; dir2++) {
-                                var nx2 = nx + dx[dir];
-                                var ny2 = ny + dy[dir];
-                                if (inRange(nx2,ny2) && board[nx2][ny2] != player)
-                                    thisEnemyLiberties++;
-                            }
-                            if (thisEnemyLiberties > enemyLiberties)
-                                enemyLiberties = thisEnemyLiberties;
-                        }
+function recursiveMinimax(board, player, plies) {
+    board = boardCopy(board);
+    
+    // Check atari situation
+    var keepMakingForcedMoves = true;
+    while (keepMakingForcedMoves) {
+        keepMakingForcedMoves = false;
+        clearDfsStatus();
+        var atariX = null;
+        var atariY = null;
+        var groupId = 0;
+        
+        for (var i =0; i< BOARD_SIZE; i++)
+        for (var j =0; j< BOARD_SIZE; j++) 
+        if (dfsStatus[i][j] == 0 && board[i][j] != EMPTY) {
+            groupId++;
+            dfsColor = board[i][j];
+            dfsMark = groupId;
+            dfsBoard = board;
+            if (libertyDfs(i,j) == 1) {
+                if (dfsColor == otherPlayer(player))
+                    return playerSign(player);
+                if (atariX === null) {
+                    for (var i2 =0; i2< BOARD_SIZE; i2++)
+                    for (var j2 =0; j2< BOARD_SIZE; j2++)
+                    if (board[i2][j2] == EMPTY && dfsStatus[i2][j2] == dfsMark) {
+                        atariX = i2;
+                        atariY = j2;
                     }
                 }
-                if (stoneLiberties < 2)
-                    continue; // Illegal or self-atari
-                if (stoneLiberties < enemyLiberties)
-                    continue; // Never play a lone stone having fewer liberties or friends than adjacent enemy stones
             }
+        }
+        if (atariX !== null) {
+            var moveResult = move(board, player, atariX,atariY);
+            if (moveResult["status"] != "OK")
+                return -playerSign(player);
+            player = otherPlayer(player);
+            keepMakingForcedMoves = true;
+        }
+    }
+    
+    // Normal search (counts as a ply)
+    
+    if (plies == 0) return 0.0;
+    var bestResultSoFar = -playerSign(player);
+    for (var i =0; i< BOARD_SIZE; i++)
+    for (var j =0; j< BOARD_SIZE; j++) 
+        if (board[i][j] == EMPTY) {
+            var moveResult = move(board, player, i,j);
+            if (moveResult["status"] == "OK") {
+                if (moveResult["captures"] > 0)
+                    return playerSign(player);
+                var childValue = recursiveMinimax(board, otherPlayer(player), plies - 1);
+                if (childValue == playerSign(player))
+                    return childValue;
+                else if (childValue == 0.0)
+                    bestResultSoFar = childValue;
+                board[i][j] = EMPTY;
+            }
+        }
+    return bestResultSoFar;
+}
 
-
-
-
-        var moveResult = move(boardCopy(board), player, i,j);
-        var moveDescription = {"x" : i, "y" : j, "newBoard" : moveResult["board"]};
-        if (moveResult["status"] == "OK" && moveResult["captures"] > 0)
-            return moveDescription;
-        if (moveResult["status"] == "OK") {
-            if (validMove === null)
-                validMove = moveDescription;
-            var badMove = false;
-        badMoveLoop:
-            for (var i2 =0; i2< BOARD_SIZE; i2++)
-            for (var j2 =0; j2< BOARD_SIZE; j2++) {
-                var moveResult2 = move(boardCopy(moveResult["board"]), otherPlayer(player), i2,j2);
-                if (moveResult2["status"] == "OK" && moveResult2["captures"] > 0)
-                {
-                    badMove = true;
-                    break badMoveLoop;
+function getAtariGoAIMove(board, player, continuation) {
+    if (MONTECARLO_PLAYOUTS >= 500)
+        MINIMAX_EXPLORATION_PLIES = 2;
+    else
+        MINIMAX_EXPLORATION_PLIES = 1;
+    var okMoves = [];
+    var validMoves = [];
+    var winningMove = null;
+    
+    var afterMinimax;
+    
+    // This is just a loop:
+    //    for (var i =0; i< BOARD_SIZE; i++)
+    //    for (var j =0; j< BOARD_SIZE; j++) 
+    // Divided step by step using setTimeout so that the browser is not blocked (at least not too much)
+    var minimaxLoopStep = function(i,j) {
+        if (board[i][j] == EMPTY) {
+            var moveResult = move(boardCopy(board), player, i,j);
+            var moveDescription = {"x" : i, "y" : j, "newBoard" : moveResult["board"]};
+            if (moveResult["status"] == "OK") {
+                if (moveResult["captures"] > 0)
+                    return continuation(moveDescription);
+                validMoves.push({"x" : i, "y" : j, "result" : moveResult, "description" : moveDescription});
+                var childResult = recursiveMinimax(moveResult["board"], otherPlayer(player), MINIMAX_EXPLORATION_PLIES);
+                if (childResult == playerSign(player))
+                    winningMove = moveDescription;
+                else if (childResult == 0.0)
+                    okMoves.push({"x" : i, "y" : j, "result" : moveResult, "description" : moveDescription});
+            }
+        }
+        j++;
+        if (j >= BOARD_SIZE) {
+            j=0;
+            i++;
+            if (i >= BOARD_SIZE) {
+                afterMinimax();
+                return;
+            }
+        }
+        setTimeout(function (){ minimaxLoopStep(i,j);}, 0);
+    }
+    
+    afterMinimax = function() {
+        
+        if (winningMove !== null)
+            return continuation(winningMove);
+        if (okMoves.length == 0)
+            okMoves = validMoves;
+        var bestMove = null, bestScore = null;
+        
+        var secondPartForLoop = function(moveIndex) {
+            for (var dummyVar = 0; dummyVar < 1; dummyVar++) { // Single element for, so that we can use "continue" inside it to escape.
+                var i = okMoves[moveIndex].x;
+                var j = okMoves[moveIndex].y;
+                
+                if (Math.random() > 0.1) {
+                    var loneStone = true;
+            outerLoneStone: 
+                    for (var nx = i-1; nx <= i+1; nx++)
+                    for (var ny = j-1; ny <= j+1; ny++)
+                    if (inRange(nx,ny) && board[nx][ny] != EMPTY)
+                    {
+                        loneStone = false;
+                        break outerLoneStone;
+                    }
+                    if (loneStone)
+                        continue;
                 }
-            }
-            if (!badMove) {
+
+
+
+                // Apply heuristics for "acceptable move"
+                                                        
+                    var loneStone = true;
+            outerLoneStone: 
+                    for (var nx = i-1; nx <= i+1; nx++)
+                    for (var ny = j-1; ny <= j+1; ny++)
+                    if (inRange(nx,ny) && board[nx][ny] == player)
+                    {
+                        loneStone = false;
+                        break outerLoneStone;
+                    }
+                    if (loneStone && i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1)
+                        continue; // Never play on a border, unless there is a friendly stone in the immediate vicinity
+                    if (loneStone) {
+                        var stoneLiberties = 0;
+                        var enemyLiberties = 0;
+                        for (var dir = 0; dir < 4; dir++) {
+                            var nx = i + dx[dir];
+                            var ny = j + dy[dir];
+                            if (inRange(nx,ny)) {
+                                if (board[nx][ny] == EMPTY)
+                                    stoneLiberties++;
+                                else if (board[nx][ny] == otherPlayer(player)) {
+                                    var thisEnemyLiberties = 0;
+                                    for (var dir2 = 0; dir2 < 4; dir2++) {
+                                        var nx2 = nx + dx[dir];
+                                        var ny2 = ny + dy[dir];
+                                        if (inRange(nx2,ny2) && board[nx2][ny2] != player)
+                                            thisEnemyLiberties++;
+                                    }
+                                    if (thisEnemyLiberties > enemyLiberties)
+                                        enemyLiberties = thisEnemyLiberties;
+                                }
+                            }
+                        }
+                        if (stoneLiberties < 2)
+                            continue; // Illegal or self-atari
+                        if (stoneLiberties < enemyLiberties)
+                            continue; // Never play a lone stone having fewer liberties or friends than adjacent enemy stones
+                    }
+
+                var moveResult = okMoves[moveIndex].result;
+                var moveDescription = okMoves[moveIndex].description;
+                
                 var moveScore = 0.0;
                 for (var t = 0; t < MONTECARLO_PLAYOUTS; t++)
                     moveScore += montecarloPlayout(moveResult["board"], otherPlayer(player));
@@ -602,18 +728,30 @@ function getAtariGoAIMove(board, player) {
                     bestMove = moveDescription;
                 }
             }
+            moveIndex++;
+            if (moveIndex < okMoves.length)
+                setTimeout(function() {secondPartForLoop(moveIndex);}, 0);
+            else {
+                if (bestMove === null)
+                    return continuation(validMoves[Math.floor(Math.random() * validMoves.length)]);
+                else
+                    return continuation(bestMove);
+            }
         }
+        
+        if (0 < okMoves.length) setTimeout(function() {secondPartForLoop(0);}, 0);
     }
-    if (bestMove === null)
-        return validMove;
-    else
-        return bestMove;
+    
+    setTimeout(function (){ minimaxLoopStep(0,0);}, 0);
 }
 
 function makeAIMove() {
-    var aiMove = getAtariGoAIMove(globalBoard, currentPlayer);
-    makeMove(aiMove.x,aiMove.y);
-    drawBoard();
+    document.getElementById("atariGoHeader").innerHTML += " [ buscando jugada... ]";
+    getAtariGoAIMove(globalBoard, currentPlayer, function(aiMove) {
+        makeMove(aiMove.x,aiMove.y);
+        drawBoard();
+        document.getElementById("atariGoHeader").innerHTML = "AtariGo: Fuerza " + MONTECARLO_PLAYOUTS;
+    });
 }
 
 function fooClick(event) {
