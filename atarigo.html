@@ -792,7 +792,7 @@ function getAtariGoAIMove(board, player, continuation) {
             }
         }
         setTimeout(function (){ minimaxLoopStep(i,j);}, 0);
-    }
+    };
     
     afterMinimax = function() {
         
@@ -809,6 +809,19 @@ function getAtariGoAIMove(board, player, continuation) {
         if (okMoves.length == 0)
             okMoves = validMoves;
         var bestMove = null, bestScore = null;
+        
+        var bestBorderMove = null, bestBorderMoveScore = null;
+        
+        var finalFunctionCheck = function () {
+            if (bestMove === null) {
+                if (bestBorderMove === null)
+                    return continuation(validMoves[Math.floor(Math.random() * validMoves.length)]);
+                else
+                    return continuation(bestBorderMove);
+            }
+            else
+                return continuation(bestMove);
+        };
         
         var secondPartForLoop = function(moveIndex) {
             for (var dummyVar = 0; dummyVar < 1; dummyVar++) { // Single element for, so that we can use "continue" inside it to escape.
@@ -841,7 +854,7 @@ function getAtariGoAIMove(board, player, continuation) {
                     }
                 }
 
-
+                var borderHeuristicExcluded = false;
 
                 // Apply heuristics for "acceptable move"
                                                         
@@ -864,7 +877,7 @@ function getAtariGoAIMove(board, player, continuation) {
                         break enemyNearLoop;
                     }
                     if ((loneStone || noEnemyNear) && (i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1))
-                        continue; // Never play on a border, unless there is a friendly stone in the immediate vicinity
+                        borderHeuristicExcluded = true; // Never play on a border, unless there is a friendly stone in the immediate vicinity
                     if (loneStone) {
                         var stoneLiberties = 0;
                         var enemyLiberties = 0;
@@ -900,31 +913,28 @@ function getAtariGoAIMove(board, player, continuation) {
                 for (var t = 0; t < MONTECARLO_PLAYOUTS; t++)
                     moveScore += montecarloPlayout(moveResult["board"], otherPlayer(player));
                 moveScore *= playerSign(player);
-                if (bestScore === null || moveScore > bestScore) {
+                if (!borderHeuristicExcluded && (bestScore === null || moveScore > bestScore)) {
                     bestScore = moveScore;
                     bestMove = moveDescription;
+                }
+                if (bestBorderMove === null || moveScore > bestBorderMoveScore) {
+                    bestBorderMoveScore = moveScore;
+                    bestBorderMove = moveDescription;
                 }
             }
             moveIndex++;
             if (moveIndex < okMoves.length)
                 setTimeout(function() {secondPartForLoop(moveIndex);}, 0);
-            else {
-                if (bestMove === null)
-                    return continuation(validMoves[Math.floor(Math.random() * validMoves.length)]);
-                else
-                    return continuation(bestMove);
-            }
+            else
+                return finalFunctionCheck();
         }
         
         if (0 < okMoves.length)
             setTimeout(function() {secondPartForLoop(0);}, 0);
         else {
-            if (bestMove === null)
-                return continuation(validMoves[Math.floor(Math.random() * validMoves.length)]);
-            else
-                return continuation(bestMove);
+            return finalFunctionCheck();
         }
-    }
+    };
     
     setTimeout(function (){ minimaxLoopStep(0,0);}, 0);
 }
