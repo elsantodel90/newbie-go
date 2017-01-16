@@ -655,8 +655,10 @@ function montecarloPlayout(board, player) {
 }
 
 
-var ATARI_MINIMAX_EXPLORATION_PLIES = 20;
-var MINIMAX_EXPLORATION_PLIES = 2;
+var FULL_ATARI_MINIMAX_EXPLORATION_PLIES = 2000000;
+var NORMAL_ATARI_MINIMAX_EXPLORATION_PLIES = 64;
+var ATARI_MINIMAX_EXPLORATION_PLIES;
+var MINIMAX_EXPLORATION_PLIES;
 
 function recursiveMinimax(board, player, plies, atariPlies, atariPlayer) {
     board = boardCopy(board);
@@ -701,7 +703,9 @@ function recursiveMinimax(board, player, plies, atariPlies, atariPlayer) {
     
     // Normal search (counts as a ply)
     
-    var bestResultSoFar = -playerSign(player);
+    var atariChildren = [];
+    var normalChildren = [];
+    
     for (var i =0; i< BOARD_SIZE; i++)
     for (var j =0; j< BOARD_SIZE; j++) 
         if (board[i][j] == EMPTY) {
@@ -723,18 +727,27 @@ function recursiveMinimax(board, player, plies, atariPlies, atariPlayer) {
             if (moveResult["status"] == "OK") {
                 if (moveResult["captures"] > 0)
                     return playerSign(player);
-                var newPlies = plies;
-                var newAtariPlies = atariPlies;
                 if (atariPlayer == player && moveResult["atari"])
-                    newAtariPlies--;
+                    atariChildren.push({"x" : i, "y" : j});
                 else
-                    newPlies--;
-                
-                var childValue;
-                if (newAtariPlies >= 0 && newPlies >= 0)
-                    childValue = recursiveMinimax(board, otherPlayer(player), newPlies, newAtariPlies, atariPlayer);
-                else
-                    childValue = 0.0;
+                    normalChildren.push({"x" : i, "y" : j});
+                board[i][j] = EMPTY;
+            }
+        }
+    
+    var bestResultSoFar = -playerSign(player);
+    
+    var newPlies = plies * normalChildren.length;
+    var newAtariPlies = atariPlies * atariChildren.length;
+    
+    if (newPlies <= MINIMAX_EXPLORATION_PLIES) {
+        for (var index = 0; index < normalChildren.length; index++) {
+            var i = normalChildren[index].x;
+            var j = normalChildren[index].y;
+            
+            var moveResult = move(board, player, i,j);
+            if (moveResult["status"] == "OK") {
+                childValue = recursiveMinimax(board, otherPlayer(player), newPlies, atariPlies, atariPlayer);
                 if (childValue == playerSign(player))
                     return childValue;
                 else if (childValue == 0.0)
@@ -742,72 +755,136 @@ function recursiveMinimax(board, player, plies, atariPlies, atariPlayer) {
                 board[i][j] = EMPTY;
             }
         }
+    }
+    else
+        bestResultSoFar = 0.0;
+    
+    if (newAtariPlies <= ATARI_MINIMAX_EXPLORATION_PLIES) {
+        for (var index = 0; index < atariChildren.length; index++) {
+            var i = atariChildren[index].x;
+            var j = atariChildren[index].y;
+            
+            var moveResult = move(board, player, i,j);
+            if (moveResult["status"] == "OK") {
+                childValue = recursiveMinimax(board, otherPlayer(player), plies, newAtariPlies, atariPlayer);
+                if (childValue == playerSign(player))
+                    return childValue;
+                else if (childValue == 0.0)
+                    bestResultSoFar = childValue;
+                board[i][j] = EMPTY;
+            }
+        }
+    }
+    else
+        bestResultSoFar = 0.0;
+    
     return bestResultSoFar;
+
+}
+
+function signo(x) {
+    if (x > 0) return 1;
+    else if (x < 0) return -1;
+    else return 0;
 }
 
 function getAtariGoAIMove(board, player, continuation) {
-    if (MONTECARLO_PLAYOUTS >= 500)
-        MINIMAX_EXPLORATION_PLIES = 2;
-    else
-        MINIMAX_EXPLORATION_PLIES = 1;
-    var okMoves = [];
+    // HACER EL RANDOM AL PRINCIPIO! (Probablemente preguntando que no nos hayan jugado en una esquina o algo asi??)
+        
+    if (boardHistory.length < 3) {
+        var px = null, py = null;
+        for (var i =0; i < BOARD_SIZE; i++) 
+        for (var j =0; j < BOARD_SIZE; j++) 
+        if ((i == 0 || j == 0 || i == BOARD_SIZE-1 || j == BOARD_SIZE-1) && board[i][j] == otherPlayer(player))
+        {
+            px = i;
+            py = j;
+        }
+        
+        var i,j;
+        if (px === null) {
+            i = 1 + Math.floor(Math.random() * 6)
+            j = 2 + Math.floor(Math.random() * 5)
+        }
+        else {
+            i = px + signo(4-px);
+            j = py + signo(4-py);
+        }
+        var moveResult = move(boardCopy(board), player, i,j);
+        return continuation({"x" : i, "y" : j, "newBoard" : moveResult["board"]});
+    }
+        
     var validMoves = [];
-    var winningMove = null;
     
+    for (var i =0; i< BOARD_SIZE; i++)
+    for (var j =0; j< BOARD_SIZE; j++) 
+    if (board[i][j] == EMPTY) {
+        var moveResult = move(boardCopy(board), player, i,j);
+        var moveDescription = {"x" : i, "y" : j, "newBoard" : moveResult["board"]};
+        if (moveResult["status"] == "OK") {
+            validMoves.push({"x" : i, "y" : j, "result" : moveResult, "description" : moveDescription});
+            if (moveResult["captures"] > 0)
+                return continuation(moveDescription);
+        }
+    }
+    
+    if (MONTECARLO_PLAYOUTS >= 500)
+        minimaxExplorationPlies = 81*81; // Al menos 2 plies
+    else
+        minimaxExplorationPlies = 200;
+    
+    var okMoves = [];
     var afterMinimax;
     
     // This is just a loop:
-    //    for (var i =0; i< BOARD_SIZE; i++)
-    //    for (var j =0; j< BOARD_SIZE; j++) 
+    //    for (var index =0; index < validMoves.length; index++)
     // Divided step by step using setTimeout so that the browser is not blocked (at least not too much)
-    var minimaxLoopStep = function(i,j) {
-        if (board[i][j] == EMPTY) {
-            var moveResult = move(boardCopy(board), player, i,j);
-            var moveDescription = {"x" : i, "y" : j, "newBoard" : moveResult["board"]};
-            if (moveResult["status"] == "OK") {
-                if (moveResult["captures"] > 0)
-                    return continuation(moveDescription);
-                validMoves.push({"x" : i, "y" : j, "result" : moveResult, "description" : moveDescription});
+    var minimaxLoopStep = function(moveIndex) {
+        for (var dummyVar = 0; dummyVar < 1; dummyVar++) { // So that we can use continue
+            var i = validMoves[moveIndex].x;
+            var j = validMoves[moveIndex].y;
+            var moveResult = validMoves[moveIndex].result;
+            var moveDescription = validMoves[moveIndex].description;
+            
+            MINIMAX_EXPLORATION_PLIES = 0;
+            ATARI_MINIMAX_EXPLORATION_PLIES = FULL_ATARI_MINIMAX_EXPLORATION_PLIES;
+            var childResult = recursiveMinimax(moveResult["board"], otherPlayer(player),1 , 1, player);
+            if (childResult == playerSign(player))
+                return continuation(moveDescription);
+            if (childResult == -playerSign(player))
+                continue;
+            
+            childResult = recursiveMinimax(moveResult["board"], otherPlayer(player), 1, 1, otherPlayer(player));
+            if (childResult == playerSign(player))
+                throw "IMPOSSIBLE!!!!! NO TENIA QUE SER";
+            if (childResult == -playerSign(player))
+                continue;
+            
+            MINIMAX_EXPLORATION_PLIES = minimaxExplorationPlies;
+            ATARI_MINIMAX_EXPLORATION_PLIES = NORMAL_ATARI_MINIMAX_EXPLORATION_PLIES;
+            var childResult = recursiveMinimax(moveResult["board"], otherPlayer(player),1 , 1, player);
+            if (childResult == playerSign(player))
+                return continuation(moveDescription);
+            if (childResult == -playerSign(player))
+                continue;
+            
+            childResult = recursiveMinimax(moveResult["board"], otherPlayer(player), 1, 1, otherPlayer(player));
+            if (childResult == playerSign(player))
+                throw "IMPOSSIBLE!!!!! NO TENIA QUE SER";
+            if (childResult == -playerSign(player))
+                continue;
                 
-                var childResult = recursiveMinimax(moveResult["board"], otherPlayer(player),MINIMAX_EXPLORATION_PLIES , ATARI_MINIMAX_EXPLORATION_PLIES, player);
-                if (childResult == playerSign(player))
-                    winningMove = moveDescription;
-                else {
-                    childResult = recursiveMinimax(moveResult["board"], otherPlayer(player), MINIMAX_EXPLORATION_PLIES, ATARI_MINIMAX_EXPLORATION_PLIES, otherPlayer(player));
-                    if (childResult != -playerSign(player)) {
-                        childResult = recursiveMinimax(moveResult["board"], otherPlayer(player), MINIMAX_EXPLORATION_PLIES, ATARI_MINIMAX_EXPLORATION_PLIES, EMPTY);
-                        if (childResult == playerSign(player))
-                            winningMove = moveDescription;
-                        else if (childResult == 0.0)
-                            okMoves.push({"x" : i, "y" : j, "result" : moveResult, "description" : moveDescription});
-                    }
-                }
-            }
+            okMoves.push({"x" : i, "y" : j, "result" : moveResult, "description" : moveDescription});
         }
-        j++;
-        if (j >= BOARD_SIZE) {
-            j=0;
-            i++;
-            if (i >= BOARD_SIZE) {
-                afterMinimax();
-                return;
-            }
-        }
-        setTimeout(function (){ minimaxLoopStep(i,j);}, 0);
+        
+        moveIndex++;
+        if (moveIndex < validMoves.length)
+            setTimeout(function() {minimaxLoopStep(moveIndex);}, 0);
+        else
+            return afterMinimax();
     };
     
     afterMinimax = function() {
-        
-        if (winningMove !== null)
-            return continuation(winningMove);
-            
-        if (boardHistory.length < 3) {
-            var i = 1 + Math.floor(Math.random() * 6)
-            var j = 2 + Math.floor(Math.random() * 5)
-            var moveResult = move(boardCopy(board), player, i,j);
-            return continuation({"x" : i, "y" : j, "newBoard" : moveResult["board"]});
-        }
-            
         if (okMoves.length == 0)
             okMoves = validMoves;
         var bestMove = null, bestScore = null;
@@ -976,7 +1053,7 @@ function getAtariGoAIMove(board, player, continuation) {
         }
     };
     
-    setTimeout(function (){ minimaxLoopStep(0,0);}, 0);
+    setTimeout(function (){ minimaxLoopStep(0);}, 0);
 }
 
 function makeAIMove() {
