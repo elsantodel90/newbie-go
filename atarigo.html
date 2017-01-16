@@ -879,6 +879,44 @@ function getAtariGoAIMove(board, player, continuation) {
                     if ((loneStone || noEnemyNear) && (i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1))
                         borderHeuristicExcluded = true; // Never play on a border, unless there is a friendly stone in the immediate vicinity
                     if (loneStone) {
+                        // No not let the opponent trivially cut us
+                        var weCanBeCut = false;
+                weCanBeCutLoop:
+                        for (var dir = 0; dir < 4; dir++) {
+                            var midX = i + dx[dir];
+                            var midY = j + dy[dir];
+                            var nx = i + 2*dx[dir];
+                            var ny = j + 2*dy[dir];
+                            if (inRange(nx,ny) && board[nx][ny] == player) {
+                                if (board[midX][midY] == EMPTY) {
+                                    var ex1 = midX + dy[dir];
+                                    var ey1 = midY + dx[dir];
+                                    var ex2 = midX - dy[dir];
+                                    var ey2 = midY - dx[dir];
+                                    if (inRange(ex1, ey1) && board[ex1][ey1] == otherPlayer(player) &&
+                                        inRange(ex2, ey2) && board[ex2][ey2] == otherPlayer(player)) {
+                                            weCanBeCut = true;
+                                            break weCanBeCutLoop;
+                                    }
+                                } else {
+                                    // Simply ban the clamp (but atari is of course ok)
+                                    var ex1 = midX + dy[dir];
+                                    var ey1 = midY + dx[dir];
+                                    var ex2 = midX - dy[dir];
+                                    var ey2 = midY - dx[dir];
+                                    if (inRange(ex1, ey1) && board[ex1][ey1] != player &&
+                                        inRange(ex2, ey2) && board[ex2][ey2] != player) {
+                                            weCanBeCut = true;
+                                            break weCanBeCutLoop;
+                                    }
+                                }
+                            }
+                        }
+                        if (weCanBeCut)
+                            continue;
+                        
+                        
+                        
                         var stoneLiberties = 0;
                         var enemyLiberties = 0;
                         for (var dir = 0; dir < 4; dir++) {
