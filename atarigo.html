@@ -605,7 +605,16 @@ function montecarloPlayout(board, player) {
                         loneStone = false;
                         break outerLoneStone;
                     }
-                    if (loneStone && i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1)
+                    var noEnemyNear = true;
+            enemyNearLoop: 
+                    for (var nx = i-1; nx <= i+1; nx++)
+                    for (var ny = j-1; ny <= j+1; ny++)
+                    if (inRange(nx,ny) && board[nx][ny] == otherPlayer(player))
+                    {
+                        noEnemyNear = false;
+                        break enemyNearLoop;
+                    }
+                    if ((loneStone || noEnemyNear) && (i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1))
                         continue; // Never play on a border, unless there is a friendly stone in the immediate vicinity
                     if (loneStone) {
                         var stoneLiberties = 0;
@@ -789,6 +798,14 @@ function getAtariGoAIMove(board, player, continuation) {
         
         if (winningMove !== null)
             return continuation(winningMove);
+            
+        if (boardHistory.length < 3) {
+            var i = 1 + Math.floor(Math.random() * 6)
+            var j = 2 + Math.floor(Math.random() * 5)
+            var moveResult = move(boardCopy(board), player, i,j);
+            return continuation({"x" : i, "y" : j, "newBoard" : moveResult["board"]});
+        }
+            
         if (okMoves.length == 0)
             okMoves = validMoves;
         var bestMove = null, bestScore = null;
@@ -837,9 +854,17 @@ function getAtariGoAIMove(board, player, continuation) {
                         loneStone = false;
                         break outerLoneStone2;
                     }
-                    //if (loneStone && (i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1))
-                    if (i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1)
-                        continue; // Never play on a border [unless the other optimizations like atari reading kick in]
+                    var noEnemyNear = true;
+            enemyNearLoop: 
+                    for (var nx = i-1; nx <= i+1; nx++)
+                    for (var ny = j-1; ny <= j+1; ny++)
+                    if (inRange(nx,ny) && board[nx][ny] == otherPlayer(player))
+                    {
+                        noEnemyNear = false;
+                        break enemyNearLoop;
+                    }
+                    if ((loneStone || noEnemyNear) && (i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1))
+                        continue; // Never play on a border, unless there is a friendly stone in the immediate vicinity
                     if (loneStone) {
                         var stoneLiberties = 0;
                         var enemyLiberties = 0;
