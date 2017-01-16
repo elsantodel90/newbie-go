@@ -838,7 +838,7 @@ function getAtariGoAIMove(board, player, continuation) {
                         break outerLoneStone2;
                     }
                     //if (loneStone && (i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1))
-                    if (loneStone)
+                    if (i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1)
                         continue; // Never play on a border [unless the other optimizations like atari reading kick in]
                     if (loneStone) {
                         var stoneLiberties = 0;
