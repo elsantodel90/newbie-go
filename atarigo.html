@@ -815,6 +815,7 @@ function getAtariGoAIMove(board, player, continuation) {
     }
         
     var validMoves = [];
+    var minimaxMoves = [];
     
     for (var i =0; i< BOARD_SIZE; i++)
     for (var j =0; j< BOARD_SIZE; j++) 
@@ -825,6 +826,38 @@ function getAtariGoAIMove(board, player, continuation) {
             validMoves.push({"x" : i, "y" : j, "result" : moveResult, "description" : moveDescription});
             if (moveResult["captures"] > 0)
                 return continuation(moveDescription);
+                
+            var stoneIsSoLonely = true;
+            for (var nx = i-1; nx <= i+1; nx++)
+            for (var ny = j-1; ny <= j+1; ny++)
+            if (inRange(nx,ny) && board[nx][ny] != EMPTY)
+                stoneIsSoLonely = false;
+            
+            if (!stoneIsSoLonely) {
+                
+                    var loneStone = true;
+            outerLoneStone2: 
+                    for (var nx = i-1; nx <= i+1; nx++)
+                    for (var ny = j-1; ny <= j+1; ny++)
+                    if (inRange(nx,ny) && board[nx][ny] == player)
+                    {
+                        loneStone = false;
+                        break outerLoneStone2;
+                    }
+                    var noEnemyNear = true;
+            enemyNearLoop: 
+                    for (var nx = i-1; nx <= i+1; nx++)
+                    for (var ny = j-1; ny <= j+1; ny++)
+                    if (inRange(nx,ny) && board[nx][ny] == otherPlayer(player))
+                    {
+                        noEnemyNear = false;
+                        break enemyNearLoop;
+                    }
+                    
+                if (! ((loneStone || noEnemyNear) && (i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1)))
+                    minimaxMoves.push({"x" : i, "y" : j, "result" : moveResult, "description" : moveDescription});
+            }
+                
         }
     }
     
@@ -837,15 +870,16 @@ function getAtariGoAIMove(board, player, continuation) {
     var afterMinimax;
     
     // This is just a loop:
-    //    for (var index =0; index < validMoves.length; index++)
+    //    for (var index =0; index < minimaxMoves.length; index++)
     // Divided step by step using setTimeout so that the browser is not blocked (at least not too much)
     var minimaxLoopStep = function(moveIndex) {
-        document.getElementById("percentageIndicator").innerHTML = "Fase 1: " + Math.floor(100 * ((moveIndex+1) / validMoves.length)) + "%";
+        document.getElementById("percentageIndicator").innerHTML = "Fase 1: " + Math.floor(100 * ((moveIndex+1) / minimaxMoves.length)) + "%";
         for (var dummyVar = 0; dummyVar < 1; dummyVar++) { // So that we can use continue
-            var i = validMoves[moveIndex].x;
-            var j = validMoves[moveIndex].y;
-            var moveResult = validMoves[moveIndex].result;
-            var moveDescription = validMoves[moveIndex].description;
+            var i = minimaxMoves[moveIndex].x;
+            var j = minimaxMoves[moveIndex].y;
+            
+            var moveResult = minimaxMoves[moveIndex].result;
+            var moveDescription = minimaxMoves[moveIndex].description;
             
             MINIMAX_EXPLORATION_PLIES = 0;
             ATARI_MINIMAX_EXPLORATION_PLIES = FULL_ATARI_MINIMAX_EXPLORATION_PLIES;
@@ -879,7 +913,7 @@ function getAtariGoAIMove(board, player, continuation) {
         }
         
         moveIndex++;
-        if (moveIndex < validMoves.length)
+        if (moveIndex < minimaxMoves.length)
             setTimeout(function() {minimaxLoopStep(moveIndex);}, 0);
         else
             return afterMinimax();
