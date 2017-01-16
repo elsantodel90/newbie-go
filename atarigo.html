@@ -564,95 +564,91 @@ function montecarloPlayout(board, player) {
                 return -playerSign(player);
         }
         else {
+            var movesToConsider = [[],allBoardMoves];
             var searchForMove = true;
-            if (movesForAtari.length > 0 && Math.random() > 0.1) {
-                var moveToDo = movesForAtari[Math.floor(Math.random() * movesForAtari.length)];
-                var moveResult = move(board, player, moveToDo.x,moveToDo.y);
-                if (moveResult["status"] == "OK")
-                    searchForMove = false;
-            }
-            if (searchForMove) {
-                // Choose random move
-                shuffleArray(allBoardMoves);
-                var moveFound = false;
-                for (var index =0; index < allBoardMoves.length; index++) {
-                    
-                    var i = allBoardMoves[index].x;
-                    var j = allBoardMoves[index].y;
-                    if (board[i][j] != EMPTY) continue;
-                    
-                    // Apply heuristics for "acceptable move"
-                                    
-                    var farAway = true;
-                    var FAR_DIST = 2;
-            outerFarAway:
-                    for (var nx = i-FAR_DIST; nx <= i+FAR_DIST; nx++)
-                    for (var ny = j-(FAR_DIST - Math.abs(nx-i)); ny <= j+(FAR_DIST - Math.abs(nx-i)); ny++) 
-                    if (inRange(nx,ny) && board[nx][ny] == player)
-                    {
-                        farAway = false;
-                        break outerFarAway;
-                    }
-                    if (farAway)
-                        continue; // Never play too far away from friendly stones
-                    
-                    var loneStone = true;
-            outerLoneStone: 
-                    for (var nx = i-1; nx <= i+1; nx++)
-                    for (var ny = j-1; ny <= j+1; ny++)
-                    if (inRange(nx,ny) && board[nx][ny] == player)
-                    {
-                        loneStone = false;
-                        break outerLoneStone;
-                    }
-                    var noEnemyNear = true;
-            enemyNearLoop: 
-                    for (var nx = i-1; nx <= i+1; nx++)
-                    for (var ny = j-1; ny <= j+1; ny++)
-                    if (inRange(nx,ny) && board[nx][ny] == otherPlayer(player))
-                    {
-                        noEnemyNear = false;
-                        break enemyNearLoop;
-                    }
-                    if ((loneStone || noEnemyNear) && (i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1))
-                        continue; // Never play on a border, unless there is a friendly stone in the immediate vicinity
-                    if (loneStone) {
-                        var stoneLiberties = 0;
-                        var enemyLiberties = 0;
-                        for (var dir = 0; dir < 4; dir++) {
-                            var nx = i + dx[dir];
-                            var ny = j + dy[dir];
-                            if (inRange(nx,ny)) {
-                                if (board[nx][ny] == EMPTY)
-                                    stoneLiberties++;
-                                else if (board[nx][ny] == otherPlayer(player)) {
-                                    var thisEnemyLiberties = 0;
-                                    for (var dir2 = 0; dir2 < 4; dir2++) {
-                                        var nx2 = nx + dx[dir];
-                                        var ny2 = ny + dy[dir];
-                                        if (inRange(nx2,ny2) && board[nx2][ny2] != player)
-                                            thisEnemyLiberties++;
-                                    }
-                                    if (thisEnemyLiberties > enemyLiberties)
-                                        enemyLiberties = thisEnemyLiberties;
+            if (movesForAtari.length > 0 && Math.random() > 0.1)
+                movesToConsider[0] = movesForAtari;
+            // Choose random move
+            var moveFound = false;
+            for (var moveArrayIndex =0; moveArrayIndex < 2; moveArrayIndex++) {
+              shuffleArray(movesToConsider[moveArrayIndex]);
+              for (var index =0; index < movesToConsider[moveArrayIndex].length; index++) {
+                
+                var i = movesToConsider[moveArrayIndex][index].x;
+                var j = movesToConsider[moveArrayIndex][index].y;
+                if (board[i][j] != EMPTY) continue;
+                
+                // Apply heuristics for "acceptable move"
+                                
+                var farAway = true;
+                var FAR_DIST = 2;
+        outerFarAway:
+                for (var nx = i-FAR_DIST; nx <= i+FAR_DIST; nx++)
+                for (var ny = j-(FAR_DIST - Math.abs(nx-i)); ny <= j+(FAR_DIST - Math.abs(nx-i)); ny++) 
+                if (inRange(nx,ny) && board[nx][ny] == player)
+                {
+                    farAway = false;
+                    break outerFarAway;
+                }
+                if (farAway)
+                    continue; // Never play too far away from friendly stones
+                
+                var loneStone = true;
+        outerLoneStone: 
+                for (var nx = i-1; nx <= i+1; nx++)
+                for (var ny = j-1; ny <= j+1; ny++)
+                if (inRange(nx,ny) && board[nx][ny] == player)
+                {
+                    loneStone = false;
+                    break outerLoneStone;
+                }
+                var noEnemyNear = true;
+        enemyNearLoop: 
+                for (var nx = i-1; nx <= i+1; nx++)
+                for (var ny = j-1; ny <= j+1; ny++)
+                if (inRange(nx,ny) && board[nx][ny] == otherPlayer(player))
+                {
+                    noEnemyNear = false;
+                    break enemyNearLoop;
+                }
+                if ((loneStone || noEnemyNear) && (i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1))
+                    continue; // Never play on a border, unless there is a friendly stone in the immediate vicinity
+                if (loneStone) {
+                    var stoneLiberties = 0;
+                    var enemyLiberties = 0;
+                    for (var dir = 0; dir < 4; dir++) {
+                        var nx = i + dx[dir];
+                        var ny = j + dy[dir];
+                        if (inRange(nx,ny)) {
+                            if (board[nx][ny] == EMPTY)
+                                stoneLiberties++;
+                            else if (board[nx][ny] == otherPlayer(player)) {
+                                var thisEnemyLiberties = 0;
+                                for (var dir2 = 0; dir2 < 4; dir2++) {
+                                    var nx2 = nx + dx[dir];
+                                    var ny2 = ny + dy[dir];
+                                    if (inRange(nx2,ny2) && board[nx2][ny2] != player)
+                                        thisEnemyLiberties++;
                                 }
+                                if (thisEnemyLiberties > enemyLiberties)
+                                    enemyLiberties = thisEnemyLiberties;
                             }
                         }
-                        if (stoneLiberties < 2)
-                            continue; // Illegal or self-atari
-                        if (stoneLiberties < enemyLiberties)
-                            continue; // Never play a lone stone having fewer liberties or friends than adjacent enemy stones
                     }
-                    
-                    var moveResult = move(board, player, i,j);
-                    if (moveResult["status"] == "OK") {
-                        moveFound = true;
-                        break;
-                    }
+                    if (stoneLiberties < 2)
+                        continue; // Illegal or self-atari
+                    if (stoneLiberties < enemyLiberties)
+                        continue; // Never play a lone stone having fewer liberties or friends than adjacent enemy stones
                 }
-                if (!moveFound)
-                    return -playerSign(player);
-            }
+                
+                var moveResult = move(board, player, i,j);
+                if (moveResult["status"] == "OK") {
+                    moveFound = true;
+                    break;
+                }
+            }}
+            if (!moveFound)
+                return -playerSign(player);
         }
         player = otherPlayer(player);
     }
@@ -662,7 +658,7 @@ function montecarloPlayout(board, player) {
 var ATARI_MINIMAX_EXPLORATION_PLIES = 20;
 var MINIMAX_EXPLORATION_PLIES = 2;
 
-function recursiveMinimax(board, player, plies, atariPlayer) {
+function recursiveMinimax(board, player, plies, atariPlies, atariPlayer) {
     board = boardCopy(board);
     
     // Check atari situation
@@ -705,12 +701,12 @@ function recursiveMinimax(board, player, plies, atariPlayer) {
     
     // Normal search (counts as a ply)
     
-    if (plies == 0) return 0.0;
     var bestResultSoFar = -playerSign(player);
     for (var i =0; i< BOARD_SIZE; i++)
     for (var j =0; j< BOARD_SIZE; j++) 
         if (board[i][j] == EMPTY) {
-            if (atariPlayer == EMPTY) {
+            
+            // Do not read "lone" moves
                 var loneStone = true;
         outerLoneStone: 
                 for (var nx = i-1; nx <= i+1; nx++)
@@ -722,21 +718,27 @@ function recursiveMinimax(board, player, plies, atariPlayer) {
                 }
                 if (loneStone)
                     continue;
-            } 
-            else if (atariPlayer != player)
-                return 0.0;
             
             var moveResult = move(board, player, i,j);
             if (moveResult["status"] == "OK") {
                 if (moveResult["captures"] > 0)
                     return playerSign(player);
-                if (atariPlayer == EMPTY || moveResult["atari"]) {
-                    var childValue = recursiveMinimax(board, otherPlayer(player), plies - 1, atariPlayer);
-                    if (childValue == playerSign(player))
-                        return childValue;
-                    else if (childValue == 0.0)
-                        bestResultSoFar = childValue;
-                }
+                var newPlies = plies;
+                var newAtariPlies = atariPlies;
+                if (atariPlayer == player && moveResult["atari"])
+                    newAtariPlies--;
+                else
+                    newPlies--;
+                
+                var childValue;
+                if (newAtariPlies >= 0 && newPlies >= 0)
+                    childValue = recursiveMinimax(board, otherPlayer(player), newPlies, newAtariPlies, atariPlayer);
+                else
+                    childValue = 0.0;
+                if (childValue == playerSign(player))
+                    return childValue;
+                else if (childValue == 0.0)
+                    bestResultSoFar = childValue;
                 board[i][j] = EMPTY;
             }
         }
@@ -767,13 +769,13 @@ function getAtariGoAIMove(board, player, continuation) {
                     return continuation(moveDescription);
                 validMoves.push({"x" : i, "y" : j, "result" : moveResult, "description" : moveDescription});
                 
-                var childResult = recursiveMinimax(moveResult["board"], otherPlayer(player), ATARI_MINIMAX_EXPLORATION_PLIES, player);
+                var childResult = recursiveMinimax(moveResult["board"], otherPlayer(player),MINIMAX_EXPLORATION_PLIES , ATARI_MINIMAX_EXPLORATION_PLIES, player);
                 if (childResult == playerSign(player))
                     winningMove = moveDescription;
                 else {
-                    childResult = recursiveMinimax(moveResult["board"], otherPlayer(player), ATARI_MINIMAX_EXPLORATION_PLIES, otherPlayer(player));
+                    childResult = recursiveMinimax(moveResult["board"], otherPlayer(player), MINIMAX_EXPLORATION_PLIES, ATARI_MINIMAX_EXPLORATION_PLIES, otherPlayer(player));
                     if (childResult != -playerSign(player)) {
-                        childResult = recursiveMinimax(moveResult["board"], otherPlayer(player), MINIMAX_EXPLORATION_PLIES, EMPTY);
+                        childResult = recursiveMinimax(moveResult["board"], otherPlayer(player), MINIMAX_EXPLORATION_PLIES, ATARI_MINIMAX_EXPLORATION_PLIES, EMPTY);
                         if (childResult == playerSign(player))
                             winningMove = moveDescription;
                         else if (childResult == 0.0)
