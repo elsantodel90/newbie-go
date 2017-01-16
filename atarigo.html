@@ -832,8 +832,8 @@ function getAtariGoAIMove(board, player, continuation) {
                     
                     var farFromEnemy = true;
             farFromEnemyLoop: 
-                    for (var nx = i-3; nx <= i+3; nx++)
-                    for (var ny = j-(3-Math.abs(nx-i)); ny <= j+(3-Math.abs(nx-i)); ny++)
+                    for (var nx = i-2; nx <= i+2; nx++)
+                    for (var ny = j-(2-Math.abs(nx-i)); ny <= j+(2-Math.abs(nx-i)); ny++)
                     if (inRange(nx,ny) && board[nx][ny] == otherPlayer(player))
                     {
                         farFromEnemy = false;
