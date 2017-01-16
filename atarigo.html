@@ -77,7 +77,7 @@
       </form>
   </div>
   <div>
-      <h2 id="atariGoHeader">AtariGo: Fuerza 100</h2>
+      <h2><span id="atariGoHeader">AtariGo: Fuerza 100</span><span id="percentageIndicator"></span></h2>
   </div>
   <div>
       <div style="float: left;" id="gliftDiv">
@@ -656,7 +656,7 @@ function montecarloPlayout(board, player) {
 
 
 var FULL_ATARI_MINIMAX_EXPLORATION_PLIES = 2000000;
-var NORMAL_ATARI_MINIMAX_EXPLORATION_PLIES = 64;
+var NORMAL_ATARI_MINIMAX_EXPLORATION_PLIES = 32;
 var ATARI_MINIMAX_EXPLORATION_PLIES;
 var MINIMAX_EXPLORATION_PLIES;
 
@@ -829,7 +829,7 @@ function getAtariGoAIMove(board, player, continuation) {
     }
     
     if (MONTECARLO_PLAYOUTS >= 500)
-        minimaxExplorationPlies = 81*81; // Al menos 2 plies
+        minimaxExplorationPlies = 50*50;
     else
         minimaxExplorationPlies = 200;
     
@@ -840,6 +840,7 @@ function getAtariGoAIMove(board, player, continuation) {
     //    for (var index =0; index < validMoves.length; index++)
     // Divided step by step using setTimeout so that the browser is not blocked (at least not too much)
     var minimaxLoopStep = function(moveIndex) {
+        document.getElementById("percentageIndicator").innerHTML = "Fase 1: " + Math.floor(100 * ((moveIndex+1) / validMoves.length)) + "%";
         for (var dummyVar = 0; dummyVar < 1; dummyVar++) { // So that we can use continue
             var i = validMoves[moveIndex].x;
             var j = validMoves[moveIndex].y;
@@ -903,6 +904,7 @@ function getAtariGoAIMove(board, player, continuation) {
         };
         
         var secondPartForLoop = function(moveIndex) {
+            document.getElementById("percentageIndicator").innerHTML = "Fase 2: " + Math.floor(100 * ((moveIndex+1) / okMoves.length)) + "%";
             for (var dummyVar = 0; dummyVar < 1; dummyVar++) { // Single element for, so that we can use "continue" inside it to escape.
                 var i = okMoves[moveIndex].x;
                 var j = okMoves[moveIndex].y;
@@ -1058,11 +1060,14 @@ function getAtariGoAIMove(board, player, continuation) {
 
 function makeAIMove() {
     document.getElementById("atariGoHeader").innerHTML += " [ buscando jugada... ]";
-    getAtariGoAIMove(globalBoard, currentPlayer, function(aiMove) {
-        makeMove(aiMove.x,aiMove.y);
-        drawBoard();
-        document.getElementById("atariGoHeader").innerHTML = "AtariGo: Fuerza " + MONTECARLO_PLAYOUTS;
-    });
+    setTimeout(function () {
+        getAtariGoAIMove(globalBoard, currentPlayer, function(aiMove) {
+            makeMove(aiMove.x,aiMove.y);
+            drawBoard();
+            document.getElementById("atariGoHeader").innerHTML = "AtariGo: Fuerza " + MONTECARLO_PLAYOUTS;
+            document.getElementById("percentageIndicator").innerHTML = "";
+        });
+    }, 100);
 }
 
 function fooClick(event) {
