@@ -182,10 +182,16 @@
   <div id="learn-ladders">
       <h1>Persecución: Escaleras</h1>
       <ul>
-      <li>Escaleras.</li>
-      <li>Ejemplos:</li>
-           <ul><li>canónico</li><li>Contra el borde</li></ul>
-      <li>Romper la escalera.</li>
+      <li>La persecución directa es una <em>técnica de captura</em>.</li>
+      <li>Consiste en <em>perseguir</em> un grupo mediante la realización de ataris, hasta lograr que choque contra el borde del tablero o contra un grupo propio, produciéndose de esta forma la captura.</li>
+      <li>Vemos a continuación un primer ejemplo muy simple y común, que se produce al dejar una piedra en primera línea sin defender.</li>
+      <div id="tableroEjemplo19" class="tableroEjemplo"></div>
+      <li>A continuación, vemos un ejemplo de lo que se denomina una <em>escalera</em> debido a la forma llena de &quot;escalones&quot; que tiene el grupo que escapa.</li>
+      <div id="tableroEjemplo20" class="tableroEjemplo"></div>
+      <li>Si en lugar de terminar en el borde del tablero, con la escalera el jugador logra perseguir al grupo que escapa hasta un grupo propio, podrá igualmente producirse la captura, como se ve en el siguiente ejemplo.</li>
+      <div id="tableroEjemplo21" class="tableroEjemplo"></div>
+      <li>Si en cambio la escalera lleva hasta un grupo del mismo color que el grupo que escapa, la escalera no funcionará, y el resultado final será muy malo porque deja al jugador que perseguía expuesto a muchísimos dobles ataris (marcados con <em>X</em> en el ejemplo). Se dice que la piedra marcada con <em>A</em> en el ejemplo <em>rompe</em> la escalera.</li>
+      <div id="tableroEjemplo22" class="tableroEjemplo"></div>
       </ul>
       <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
   </div>
@@ -1522,6 +1528,74 @@ glift.create({
     uiComponents : ["BOARD","ICONBAR"],
   },
   divId: "tableroEjemplo18",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[ga][hb][hc][hd]AW[ha][ia][ib][ic][id][ie];W[gb];B[fa];W[fb];B[ea];W[eb];B[da];W[db];B[ca];W[cb];B[ba];W[bb];B[aa];W[ab])",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo19",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[fa][ga][hb][hc][hd]AW[hf][hg][ha][ia][ib][ic][id][ie][gb];B[fb];W[gc];B[gd];W[fc];B[ec];W[fd];B[fe];W[ed];B[dd];W[ee];B[ef];W[de];B[ce];W[df];B[dg];W[cf];B[bf];W[cg];B[ch];W[bg];B[bh];W[ag];B[af];W[ah];B[ai])",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo20",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[bf][bg][bi][fa][ga][hb][hc][hd]AW[hf][hg][ha][ia][ib][ic][id][ie][gb];B[fb];W[gc];B[gd];W[fc];B[ec];W[fd];B[fe];W[ed];B[dd];W[ee];B[ef];W[de];B[ce];W[df];B[dg];W[cf];B[cg])",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo21",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[fa][ga][hb][hc][hd]AW[bf][hf][hg][ha][ia][ib][ic][id][ie][gb]LB[bf:A];B[fb];W[gc];B[gd];W[fc];B[ec];W[fd];B[fe];W[ed];B[dd];W[ee];B[ef];W[de];B[ce];W[df];B[dg];W[cf]MA[cd][dc][eb][eg][ff][ge])",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo22",
   display: {
     theme: 'DEPTH',
     goBoardBackground: 'images/purty_wood.png',
