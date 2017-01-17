@@ -67,7 +67,7 @@
               <li>Si un jugador no tiene jugadas válidas, pierde inmediatamente.</li></ul>
       </ul>
   </div>
-  <h1>AtariBot</h1>
+  <h1 id="atariBotHeaderDiv">AtariBot</h1>
   <p>A continuación, se puede practicar Atari-go contra la computadora. Es posible seleccionar la fuerza del programa desde 1 hasta 9. Cuánto más fuerte, más tiempo toma el cálculo de jugadas.</p>
   <p>Cuando una partida termina, el programa lo indica y comienza una nueva inmediatamente, alternando a quién le toca jugar con negras en cada partida.</p>
   <div id="controls">
@@ -96,8 +96,10 @@
       <div style="float: left;" id="extras">
             Si le interesa mejorar su Atari-go, <br>puede aprender sobre los siguientes temas:
             <ul>
-                <li><a href="#learn-atari" >Atari</a></li>
                 <li><a href="#learn-liberties" >Libertades</a></li>
+                <li><a href="#learn-atari" >Atari</a></li>
+                <li><a href="#learn-double-atari" >Atari Doble</a></li>
+                <li><a href="#learn-succesive-ataris" >Ataris Sucesivos</a></li>
                 <li><a href="#learn-second-line" >Atari en segunda línea</a></li>
                 <li><a href="#learn-ladders" >Persecución: Escaleras</a></li>
                 <li><a href="#learn-immortal" >Grupo inmortal</a></li>
@@ -105,28 +107,60 @@
       </div>
   </div>
   
-  <div style="clear:both" id="learn-atari">
-      <h1>Atari</h1>
-      <ul>
-      <li>Definición.</li>
-      <li>En Atari-go son especialmente importantes porque no se pueden ignorar. </li>
-      <li>Atari doble para capturar.</li>
-      </ul>
-  </div>
-  <div id="learn-liberties">
+  <div style="clear:both" id="learn-liberties">
       <h1>Libertades</h1>
       <ul>
-      <li>Conseguir más libertades es bueno. </li>
-      <li>Mejor palos que triángulos. </li>
-      <li>Triángulo vacío. </li>
-      <li>Hay menos libertades en las esquinas y bordes.</li>
+      <li>Un grupo es capturado cuando se queda sin libertades.</li>
+      <li>Además en cada jugada, podemos quitarle <strong>como mucho una libertad</strong> a un cierto grupo rival.</li>
+      <li>Por lo tanto, en general es buena idea tratar de asegurarse de tener muchas libertades, y tratar de reducir las posibilidades de obtener libertades del rival. </li>
+      <li>Una consecuencia inmediata de esta observación es que no es buena idea jugar piedras aisladas, sin algún motivo concreto, contra un borde o una esquina, ya que allí tienen menos libertades:
+          En el ejemplo se muestran 3 piedras, con sus libertades marcadas. Se aprecia fácilmente que una piedra suelta tiene normalmente 4 libertades, mientras que en el borde tiene solamente 3, y en
+          la esquina tan sólo 2.</li>
+      <div id="tableroEjemplo8" class="tableroEjemplo"></div>
+      <li>Además, a la hora de armar grupos, es conveniente apuntar a crear formas con las que se tengan muchas libertades. En general, son mejores las denominadas <em>paredes</em>, secuencias de piedras
+           consecutivas todas en la misma línea recta, que figuras con <em>giros</em>.</li>
+      <li>Por ejemplo en la figura se muestra una pared blanca de 3 piedras, contra la mala forma que se conoce como <em>triángulo vacío</em>: Se aprecia fácilmente que el triángulo vacío de negro tiene una libertad menos usando la misma cantidad de piedras.</li>
+      <div id="tableroEjemplo9" class="tableroEjemplo"></div>
+      <li>A continuación tenemos un ejemplo grande, donde mostramos una pared de 7 piedras, en comparación a un grupo con muchos giros también formado por 7 piedras: mientras que la pared tiene 16 libertades en este caso, el grupo con giros tiene solamente 11: cada giro pierde una libertad en comparación a la pared.</li>
+      <div id="tableroEjemplo10" class="tableroEjemplo"></div>
+      <div id="tableroEjemplo11" class="tableroEjemplo"></div>
+      <li>Finalmente, a continuación mostramos el ejemplo máximo de mala forma: una masa de piedras totalmente compacta. Se puede ver que <strong>sacando</strong> por ejemplo la piedra central del grupo negro de la izquierda, el grupo tiene una libertad más completamente segura, con lo cual es claro que esa piedra central no hace más que estorbar y por lo tanto es una jugada perdida.</li>
+      <div id="tableroEjemplo12" class="tableroEjemplo"></div>
       </ul>
+      <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
+  </div>
+  <div id="learn-atari">
+      <h1>Atari</h1>
+      <ul>
+      <li>Se denomina <em>atari</em> a la situación que se produce cuando existe en el tablero un grupo con una única libertad. Se dice que dicho grupo <em>está en atari</em>, y se suele decir también que una jugada que
+          pone un grupo en atari <em>es atari</em>.</li>
+      <li>En Atari-go son especialmente importantes porque no se pueden ignorar: Si un grupo está en atari, significa que con una jugada más puede ser capturado, y por lo tanto si un jugador no hace nada al respecto,
+          perderá en la siguiente jugada si su rival ejecuta la captura.</li>
+      <li>Es muy importante entonces estar alerta y poder <strong>reconocer ataris rápidamente</strong>.</li>
+      <li>Atari doble para capturar.</li>
+      </ul>
+      <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
+  </div>
+  <div style="clear:both" id="learn-double-atari">
+      <h1>Atari Doble</h1>
+      <ul>
+      <li>Atari doble para capturar.</li>
+      </ul>
+      <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
+  </div>
+  <div style="clear:both" id="learn-succesive-ataris">
+      <h1>Ataris Sucesivos</h1>
+      <ul>
+      <li>Hablar de eso. Ejemplo.</li>
+      </ul>
+      <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
   </div>
   <div id="learn-second-line">
       <h1>Atari en segunda línea</h1>
       <ul>
       <li>Ejemplo particular de la idea anterior pues en el borde hay pocas libertades y nos atrapan.</li>
       </ul>
+      <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
   </div>
   <div id="learn-ladders">
       <h1>Persecución: Escaleras</h1>
@@ -136,12 +170,14 @@
            <ul><li>canónico</li><li>Contra el borde</li></ul>
       <li>Romper la escalera.</li>
       </ul>
+      <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
   </div>
   <div id="learn-immortal">
       <h1>Grupo inmortal</h1>
       <ul>
       <li> Dos libertades en un ojo.</li>
       </ul>
+      <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
   </div>
   
   <script>
@@ -1282,6 +1318,91 @@ glift.create({
     uiComponents : ["BOARD"],
   },
   divId: "tableroEjemplo7",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AW[aa][fa][ef]MA[ab][ba][ga][ea][fb][df][ff][eg][ee])",
+    widgetType: 'EXAMPLE',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD"],
+  },
+  divId: "tableroEjemplo8",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AW[cc][dc][ec]MA[cb][bc][cd][db][dd][eb][ed][fc]AB[dg][eg][eh]MA[cg][df][dh][ef][ei][fg][fh])",
+    widgetType: 'EXAMPLE',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD"],
+  },
+  divId: "tableroEjemplo9",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AW[db][dc][dd][de][df][dg][dh]MA[da][cb][eb][cc][ec][cd][ed][ce][ee][cf][ef][cg][eg][ch][eh][di])",
+    widgetType: 'EXAMPLE',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD"],
+  },
+  divId: "tableroEjemplo10",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[bg][cg][cf][df][de][ee][ed]MA[ag][bh][bf][ch][ce][dd][dg][ec][ef][fd][fe])",
+    widgetType: 'EXAMPLE',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD"],
+  },
+  divId: "tableroEjemplo11",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[bb][cb][db][bc][cc][dc][bd][cd][dd][fe][ge][he][ff][hf][fg][gg][hg]MA[cc][gf])",
+    widgetType: 'EXAMPLE',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD"],
+  },
+  divId: "tableroEjemplo12",
   display: {
     theme: 'DEPTH',
     goBoardBackground: 'images/purty_wood.png',
