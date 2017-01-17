@@ -1,5 +1,5 @@
--> Engine de AtariGo (montecarlo *muy* trucho, no seria tree search sino solo tomar muchos playouts para puntuar la jugada inmediatamente)
--> Jugar con eso. Tener en cuenta que con ruedita y flechitas se puede mover la cosa atras / adelante... O hacer feature posta o tratar de prohibir.
--> Engine de go pedorro? Y jugar con stone counting.
+-> Poner un boton de undo
+-> Terminar de explicar todo lo de atarigo, para asi cerrarlo
+-> Engine de go: remi "Crazy Sensei" parece javascript perfectamente utilizable de una. Y jugar con stone counting.
 -> Agregar una explicacion friendly de "reglas chinas"
 -> Agregar una explicacion friendly de "reglas japonesas"
