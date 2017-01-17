@@ -198,7 +198,17 @@
   <div id="learn-immortal">
       <h1>Grupo inmortal</h1>
       <ul>
-      <li> Dos libertades en un ojo.</li>
+      <li> En Atari-go (y aún más en go) es importante el concepto de <em>ojo</em>.</li>
+      <li> Esencialmente un ojo es un espacio vacío rodeado por un grupo, de manera tal que su rival no puede jugar ahí adentro, pues sería capturado.</li>
+      <li> El diagrama muestra tres grupos con ojos, a modo de ejemplo: El grupo negro tiene dos ojos, y los grupos blancos tienen un solo ojo, pero de distintos tamaños: el ojo marcado con triángulos tiene dos intersecciones, y el marcado con un cuadrado solamente una.</li>
+      <div id="tableroEjemplo23" class="tableroEjemplo"></div>
+      <li> El grupo que tiene un único ojo de una sola intersección puede ser capturado: si bien en la posición anterior no es posible jugar inmediatamente en el ojo, pues sería suicidio, si el rival lo rodea por completo el grupo queda en atari, pues el cuadrado pasa a ser la <strong>única</strong> libertad del grupo, y entonces se puede terminar de capturar jugando en el ojo, como se muestra a continuación.</li>
+      <div id="tableroEjemplo24" class="tableroEjemplo"></div>
+      <li> Es claro que no será posible capturar de esta forma al grupo negro, pues al tener <strong>dos ojos diferentes</strong>, sería necesario jugar ambos <strong>a la vez</strong> para ejecutar la captura. De esta forma, tanto en Go como en Atari-go, mientras un grupo tenga dos ojos es <strong>inmortal</strong> y no podrá ser capturado.</li>
+      <li> A diferencia de lo que ocurre en el juego de Go, en Atari-go no es posible capturar un grupo que tenga un solo ojo, mientras que el tamaño de este ojo sea de <strong>al menos dos intersecciones</strong>. Si negro quisiera capturar el grupo blanco de la esquina del ejemplo anterior, en algún momento se vería forzado a realizar una jugada dentro del ojo, y como eso lo pone en atari, será negro quien será capturado <strong>primero</strong> si lo intenta.</li>
+      <div id="tableroEjemplo25" class="tableroEjemplo"></div>
+      <li> Es por estos motivos que tanto en Go como en Atari-go, es importante intentar <strong>rodear</strong> espacios vacíos para asegurarlos.</li>
+      <li> Los espacios más fáciles de rodear son las esquinas y los bordes, pues como vimos antes, no es fácil para el rival invadir esos espacios sin ser capturado pues hay muy pocas libertades en esquinas y bordes.</li>
       </ul>
       <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
   </div>
@@ -1596,6 +1606,57 @@ glift.create({
     uiComponents : ["BOARD","ICONBAR"],
   },
   divId: "tableroEjemplo22",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[bb][bc][bd][cb][db][dc][cd][ab][ba][ca][ac][ad]AW[ha][hb][hc][ic][df][ef][dg][dh][eh][fh][fg]MA[aa][cc]TR[ia][ib]SQ[eg])",
+    widgetType: 'EXAMPLE',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD"],
+  },
+  divId: "tableroEjemplo23",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[bb][bc][bd][cb][db][dc][cd][ab][ba][ca][ac][ad]AW[ha][hb][hc][ic][df][ef][dg][dh][eh][fh][fg]MA[aa][cc]TR[ia][ib]SQ[eg];B[de];B[ee];B[fe];B[ff];B[gg];B[gh];B[fi];B[ei];B[di];B[ch];B[cg];B[cf];B[eg])",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo24",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[bb][bc][bd][cb][db][dc][cd][ab][ba][ca][ac][ad]AW[ha][hb][hc][ic][df][ef][dg][dh][eh][fh][fg]MA[aa][cc]TR[ia][ib]SQ[eg];B[ga];B[gb];B[gc];B[gd];B[hd];B[id];B[ib];W[ia])",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo25",
   display: {
     theme: 'DEPTH',
     goBoardBackground: 'images/purty_wood.png',
