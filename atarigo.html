@@ -135,9 +135,13 @@
       <li>Se denomina <em>atari</em> a la situación que se produce cuando existe en el tablero un grupo con una única libertad. Se dice que dicho grupo <em>está en atari</em>, y se suele decir también que una jugada que
           pone un grupo en atari <em>es atari</em>.</li>
       <li>En Atari-go son especialmente importantes porque no se pueden ignorar: Si un grupo está en atari, significa que con una jugada más puede ser capturado, y por lo tanto si un jugador no hace nada al respecto,
-          perderá en la siguiente jugada si su rival ejecuta la captura.</li>
+          perderá en la siguiente jugada si su rival ejecuta la captura (en cierta forma se parece en Atari-go al ``jaque'' del ajedrez).</li>
       <li>Es muy importante entonces estar alerta y poder <strong>reconocer ataris rápidamente</strong>.</li>
-      <li>Atari doble para capturar.</li>
+      <li>Además, al razonar sobre lo que el oponente podría contestar a una de nuestras jugadas, si la jugada es atari sabemos que el rival <strong>estará obligado a defenderse</strong>, lo cual puede ayudar a razonar y crear un plan.</li>
+      <li>A continuación se muestra un ejemplo donde blanco lleva a cabo un atari, y a continuación negro se defiende para no ser capturado.</li>
+      <div id="tableroEjemplo13" class="tableroEjemplo"></div>
+      <li>A continuación se muestra el mismo atari del ejemplo anterior, pero negro, en su afán de llevar a cabo su propio atari, no se defiende adecuadamente y es capturado en la siguiente jugada.</li>
+      <div id="tableroEjemplo14" class="tableroEjemplo"></div>
       </ul>
       <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
   </div>
@@ -1403,6 +1407,40 @@ glift.create({
     uiComponents : ["BOARD"],
   },
   divId: "tableroEjemplo12",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[bb][cb][db][bc][cc][be][ce]AW[ba][aa][ab][ca][da][dc][ac][ad][bd];W[eb];B[cd])",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo13",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[bb][cb][db][bc][cc][be][ce]AW[ba][aa][ab][ca][da][dc][ac][ad][bd];W[eb];B[ec];W[cd])",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo14",
   display: {
     theme: 'DEPTH',
     goBoardBackground: 'images/purty_wood.png',
