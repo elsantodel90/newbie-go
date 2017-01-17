@@ -62,22 +62,21 @@
       </ul>
   </div>
   <div id="controls">
-      <form class="table">
-          <span class="table-row">
-           <span class="table-cell">
+      <form>
             Fuerza:
-            <input type="text" id="strengthTextBox" value=100 style="width:50px;float:right;"><br>
-            <input id="setStrengthButton" type="button" value="Cambiar fuerza" />
-           </span>
-           <span class="table-cell">
-            <span class="note">Se recomiendan valores entre 1 y 1000 para la fuerza.
-                <strong>Atención</strong>: el tiempo que toma cada jugada es aproximadamente proporcional a la fuerza indicada.</span>
-           </span>
-          </span>
+            &nbsp; 1 <input type="radio" id="buttonStrength1" name="strengthSelector" value="1" checked="checked">
+            &nbsp; 2 <input type="radio" id="buttonStrength2" name="strengthSelector" value="2">
+            &nbsp; 3 <input type="radio" id="buttonStrength3" name="strengthSelector" value="3">
+            &nbsp; 4 <input type="radio" id="buttonStrength4" name="strengthSelector" value="4">
+            &nbsp; 5 <input type="radio" id="buttonStrength5" name="strengthSelector" value="5">
+            &nbsp; 6 <input type="radio" id="buttonStrength6" name="strengthSelector" value="6">
+            &nbsp; 7 <input type="radio" id="buttonStrength7" name="strengthSelector" value="7">
+            &nbsp; 8 <input type="radio" id="buttonStrength8" name="strengthSelector" value="8">
+            &nbsp; 9 <input type="radio" id="buttonStrength9" name="strengthSelector" value="9">
       </form>
   </div>
   <div>
-      <h2><span id="atariGoHeader">AtariGo: Fuerza 100</span><span id="percentageIndicator"></span></h2>
+      <h2><span id="atariGoHeader">AtariGo: Fuerza 1</span><span id="percentageIndicator"></span></h2>
   </div>
   <div>
       <div style="float: left;" id="gliftDiv">
@@ -86,7 +85,7 @@
           &nbsp;
       </div>
       <div style="float: left;" id="extras">
-            Para aprender más sobre Atari-go, se puede aprender sobre los siguientes temas:
+            Si le interesa mejorar su Atari-go, <br>puede aprender sobre los siguientes temas:
             <ul>
                 <li><a href="#learn-atari" >Atari</a></li>
                 <li><a href="#learn-liberties" >Libertades</a></li>
@@ -170,7 +169,7 @@ function boardCopy(boardToCopy) {
 var boardHistory = [boardCopy(globalBoard)];
 var moveHistory = [];
 var humanPlayer = BLACK;
-
+var engineStrength;
 
 function toLetter(index) {
     return String.fromCharCode('a'.charCodeAt(0) + index);
@@ -448,14 +447,7 @@ function playerSign(player) {
         return -1.0;
 }
 
-var MONTECARLO_PLAYOUTS = 100;//4000;
-
-function setStrength() {
-    MONTECARLO_PLAYOUTS = parseInt(document.getElementById("strengthTextBox").value);
-    document.getElementById("atariGoHeader").innerHTML = "AtariGo: Fuerza " + MONTECARLO_PLAYOUTS;
-}
-
-document.getElementById("setStrengthButton").onclick = setStrength;
+var MONTECARLO_PLAYOUTS;
 
 function shuffleArray(array) {
     for (var i = array.length - 1; i > 0; i--) {
@@ -655,10 +647,12 @@ function montecarloPlayout(board, player) {
 }
 
 
-var FULL_ATARI_MINIMAX_EXPLORATION_PLIES = 2000000;
-var NORMAL_ATARI_MINIMAX_EXPLORATION_PLIES = 32;
+var FULL_ATARI_MINIMAX_EXPLORATION_PLIES;
+var NORMAL_ATARI_MINIMAX_EXPLORATION_PLIES;
+var SETTING_MINIMAX_EXPLORATION_PLIES;
 var ATARI_MINIMAX_EXPLORATION_PLIES;
 var MINIMAX_EXPLORATION_PLIES;
+
 
 function recursiveMinimax(board, player, plies, atariPlies, atariPlayer) {
     board = boardCopy(board);
@@ -789,8 +783,6 @@ function signo(x) {
 }
 
 function getAtariGoAIMove(board, player, continuation) {
-    // HACER EL RANDOM AL PRINCIPIO! (Probablemente preguntando que no nos hayan jugado en una esquina o algo asi??)
-        
     if (boardHistory.length < 3) {
         var px = null, py = null;
         for (var i =0; i < BOARD_SIZE; i++) 
@@ -816,6 +808,7 @@ function getAtariGoAIMove(board, player, continuation) {
         
     var validMoves = [];
     var minimaxMoves = [];
+    var borderMoves = [];
     
     for (var i =0; i< BOARD_SIZE; i++)
     for (var j =0; j< BOARD_SIZE; j++) 
@@ -823,7 +816,8 @@ function getAtariGoAIMove(board, player, continuation) {
         var moveResult = move(boardCopy(board), player, i,j);
         var moveDescription = {"x" : i, "y" : j, "newBoard" : moveResult["board"]};
         if (moveResult["status"] == "OK") {
-            validMoves.push({"x" : i, "y" : j, "result" : moveResult, "description" : moveDescription});
+            var thisMove = {"x" : i, "y" : j, "result" : moveResult, "description" : moveDescription};
+            validMoves.push(thisMove);
             if (moveResult["captures"] > 0)
                 return continuation(moveDescription);
                 
@@ -855,16 +849,13 @@ function getAtariGoAIMove(board, player, continuation) {
                     }
                     
                 if (! ((loneStone || noEnemyNear) && (i == 0 || i == BOARD_SIZE-1 || j == 0 || j == BOARD_SIZE-1)))
-                    minimaxMoves.push({"x" : i, "y" : j, "result" : moveResult, "description" : moveDescription});
+                    minimaxMoves.push(thisMove);
+                else
+                    borderMoves.push(thisMove);
             }
                 
         }
     }
-    
-    if (MONTECARLO_PLAYOUTS >= 500)
-        minimaxExplorationPlies = 50*50;
-    else
-        minimaxExplorationPlies = 200;
     
     var okMoves = [];
     var afterMinimax;
@@ -895,7 +886,7 @@ function getAtariGoAIMove(board, player, continuation) {
             if (childResult == -playerSign(player))
                 continue;
             
-            MINIMAX_EXPLORATION_PLIES = minimaxExplorationPlies;
+            MINIMAX_EXPLORATION_PLIES = SETTING_MINIMAX_EXPLORATION_PLIES;
             ATARI_MINIMAX_EXPLORATION_PLIES = NORMAL_ATARI_MINIMAX_EXPLORATION_PLIES;
             var childResult = recursiveMinimax(moveResult["board"], otherPlayer(player),1 , 1, player);
             if (childResult == playerSign(player))
@@ -920,10 +911,12 @@ function getAtariGoAIMove(board, player, continuation) {
     };
     
     afterMinimax = function() {
+        for (var moveIndex = 0; moveIndex < borderMoves.length; moveIndex++)
+            okMoves.push(borderMoves[moveIndex]);
         if (okMoves.length == 0)
             okMoves = validMoves;
+            
         var bestMove = null, bestScore = null;
-        
         var bestBorderMove = null, bestBorderMoveScore = null;
         
         var finalFunctionCheck = function () {
@@ -1098,7 +1091,7 @@ function makeAIMove() {
         getAtariGoAIMove(globalBoard, currentPlayer, function(aiMove) {
             makeMove(aiMove.x,aiMove.y);
             drawBoard();
-            document.getElementById("atariGoHeader").innerHTML = "AtariGo: Fuerza " + MONTECARLO_PLAYOUTS;
+            document.getElementById("atariGoHeader").innerHTML = "AtariGo: Fuerza " + engineStrength;
             document.getElementById("percentageIndicator").innerHTML = "";
         });
     }, 100);
@@ -1117,6 +1110,29 @@ function fooClick(event) {
 
 gliftDiv.addEventListener("click", fooClick);
 drawBoard();
+
+function setStrength(strength, playouts, plies, atariPlies, atariFullPlies) {
+    return function() {
+        engineStrength = strength;
+        MONTECARLO_PLAYOUTS = playouts;
+        SETTING_MINIMAX_EXPLORATION_PLIES = plies;
+        NORMAL_ATARI_MINIMAX_EXPLORATION_PLIES = atariPlies;
+        FULL_ATARI_MINIMAX_EXPLORATION_PLIES = atariFullPlies;
+        document.getElementById("atariGoHeader").innerHTML = "AtariGo: Fuerza " + strength;
+    };
+}
+
+document.getElementById("buttonStrength1").onclick = setStrength(1,50  ,100 ,4 , 100);
+document.getElementById("buttonStrength2").onclick = setStrength(2,100 ,150 ,6 , 1000 );
+document.getElementById("buttonStrength3").onclick = setStrength(3,200 ,200 ,8 , 10000 );
+document.getElementById("buttonStrength4").onclick = setStrength(4,400 ,300 ,12, 100000 );
+document.getElementById("buttonStrength5").onclick = setStrength(5,800 ,400 ,16, 2000000 );
+document.getElementById("buttonStrength6").onclick = setStrength(6,1500,800 ,20, 2000000 );
+document.getElementById("buttonStrength7").onclick = setStrength(7,2500,1200,24, 2000000 );
+document.getElementById("buttonStrength8").onclick = setStrength(8,4000,1500,28, 2000000 );
+document.getElementById("buttonStrength9").onclick = setStrength(9,5000,2500,32, 2000000);
+
+document.getElementById("buttonStrength1").onclick();
 
   </script>
   
