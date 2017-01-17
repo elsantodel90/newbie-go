@@ -19,6 +19,8 @@
 
 <body>
   <script src="js/glift_1_1_2.min.js"></script>
+  <script src="sweetalert/sweetalert.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="sweetalert/sweetalert.css">
   <link rel = "stylesheet" type = "text/css" href = "css/style.css" />
   <style type="text/css">
       #gliftDiv {
@@ -55,19 +57,23 @@
           <div id="tableroEjemplo5" class="tableroEjemplo"></div>
           </ul>
       <li>Regla de captura</li>
-          <ul><li>Si luego de que un jugador realice una jugada, uno o más de los grupos de su rival queda sin libertades, dichos grupos son <strong>capturados</strong> y se sacan todas sus piedras del tablero.</li>
+          <ul><li>Si luego de que un jugador realice una jugada, uno o más de los grupos de su rival quedan sin libertades, dichos grupos son <strong>capturados</strong> y se sacan todas sus piedras del tablero.</li>
               <li>En el siguiente ejemplo, se muestra en cada caso cómo si blanco juega en <em>A</em>, logra capturar las piedras negras marcadas.<br>
                     <div id="tableroEjemplo6" class="tableroEjemplo"></div>
           </ul>
       <li>Regla de no suicidio</li>
           <ul><li>Si luego de que un jugador realice una jugada (incluyendo de ser necesaria, la aplicación de la regla de captura) un grupo del propio jugador queda sin libertades, tal jugada se considera suicidio y está <strong>prohibida</strong>.</li>
-              <li>Por ejemplo, la jugada indicada con <em>A</em> sería inválida para blanco, pues sus piedras del rincón se quedarían sin libertades.<br>
+              <li>Por ejemplo, la jugada indicada con <em>A</em> sería inválida para blanco, pues sus piedras del rincón se quedarían sin libertades. Si negro jugara allí, en cambio, la jugada sería legal, y capturaría en el proceso las dos piedras blancas.<br>
                     <div id="tableroEjemplo7" class="tableroEjemplo"></div>
           </ul>
       <li>Objetivo:</li>
-          <ul><li><strong>El primer jugador en capturar un grupo a su rival gana</strong>. Si un jugador no tiene jugadas válidas, pierde inmediatamente.</li></ul>
+          <ul><li><strong>En Atari-go, el primer jugador en capturar un grupo de su rival gana</strong>.</li>
+              <li>Si un jugador no tiene jugadas válidas, pierde inmediatamente.</li></ul>
       </ul>
   </div>
+  <h1>AtariBot</h1>
+  <p>A continuación, se puede practicar Atari-go contra la computadora. Es posible seleccionar la fuerza del programa desde 1 hasta 9. Cuánto más fuerte, más tiempo toma el cálculo de jugadas.</p>
+  <p>Cuando una partida termina, el programa lo indica y comienza una nueva inmediatamente, alternando a quién le toca jugar con negras en cada partida.</p>
   <div id="controls">
       <form>
             Fuerza:
@@ -83,7 +89,7 @@
       </form>
   </div>
   <div>
-      <h2><span id="atariGoHeader">AtariGo: Fuerza 1</span><span id="percentageIndicator"></span></h2>
+      <h2><span id="atariGoHeader">AtariBot: Fuerza 1</span><span id="percentageIndicator"></span></h2>
   </div>
   <div>
       <div style="float: left;" id="gliftDiv">
@@ -244,8 +250,8 @@ function getBoardHTML(board) {
     return ret;
 }
 
-function alertUser(message) {
-    alert(message);
+function alertUser(title, message) {
+    swal({title : title, text : message});
 }
 
 var dx = [0,0,1,-1];
@@ -406,12 +412,16 @@ function resetGame() {
 
 function showMessageFunction(humanWins) {
     var message;
-    if (humanWins)
-        message = "¡VICTORIA!";
-    else
-        message = "DERROTA :(";
+    if (humanWins) {
+        title   = "¡VICTORIA!";
+        message = "Ha derrotado a AtariBot";
+    }
+    else {
+        title = "DERROTA :(";
+        message = "Intente nuevamente, es una simple cuestión de práctica";
+    }
     return function() {
-        alertUser(message);
+        alertUser(title, message);
         resetGame();
         drawBoard();
     };
@@ -442,7 +452,7 @@ function makeMove(x,y) {
         }
     }
     else if (moveResult["status"] != "OUT_OF_RANGE")
-        alertUser(moveResult["status"]);
+        alertUser("Jugada inválida", moveResult["status"]);
 }
 
 var gliftDiv = document.getElementById("gliftDiv");
@@ -1098,7 +1108,7 @@ function makeAIMove() {
         getAtariGoAIMove(globalBoard, currentPlayer, function(aiMove) {
             makeMove(aiMove.x,aiMove.y);
             drawBoard();
-            document.getElementById("atariGoHeader").innerHTML = "AtariGo: Fuerza " + engineStrength;
+            document.getElementById("atariGoHeader").innerHTML = "AtariBot: Fuerza " + engineStrength;
             document.getElementById("percentageIndicator").innerHTML = "";
         });
     }, 100);
@@ -1125,7 +1135,7 @@ function setStrength(strength, playouts, plies, atariPlies, atariFullPlies) {
         SETTING_MINIMAX_EXPLORATION_PLIES = plies;
         NORMAL_ATARI_MINIMAX_EXPLORATION_PLIES = atariPlies;
         FULL_ATARI_MINIMAX_EXPLORATION_PLIES = atariFullPlies;
-        document.getElementById("atariGoHeader").innerHTML = "AtariGo: Fuerza " + strength;
+        document.getElementById("atariGoHeader").innerHTML = "AtariBot: Fuerza " + strength;
     };
 }
 
