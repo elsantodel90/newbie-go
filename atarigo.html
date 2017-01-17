@@ -171,8 +171,10 @@
   <div style="clear:both" id="learn-succesive-ataris">
       <h1>Ataris Sucesivos</h1>
       <ul>
-      <li>Los ataris sucesivos son una <em>técnica de captura</em></li>
-      
+      <li>Los ataris sucesivos son una <em>técnica de captura</em>.</li>
+      <li>La idea es utilizar un primer atari a modo de <em>distracción</em>, para ubicar una piedra en un lugar propicio para permitir posteriores ataris que logren la captura deseada.</li>
+      <li>A continuación se muestra un ejemplo donde se observa una piedra negra en segunda línea marcada con <em>A</em>. Al estar en segunda línea, sería tentador tratar de atraparla mediante un <a href="#learn-second-line">atari en segunda línea</a>.
+          Sin embargo, la piedra todavía tiene 3 libertades así que no es posible ponerla en atari inmediatamente, pero utilizando ataris sucesivos podremos lograr capturarla.</li>
       <div id="tableroEjemplo18" class="tableroEjemplo"></div>
       </ul>
       <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
@@ -1503,6 +1505,23 @@ glift.create({
     uiComponents : ["BOARD","ICONBAR"],
   },
   divId: "tableroEjemplo17",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[fe][db][ec][fd][ge][he][hd][hc]AW[eb][fb][fc][gc][gd][hb]LB[db:A];W[dc];B[ed];W[cb];B[da];W[ea];B[ca];W[ba])",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo18",
   display: {
     theme: 'DEPTH',
     goBoardBackground: 'images/purty_wood.png',
