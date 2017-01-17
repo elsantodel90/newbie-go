@@ -25,6 +25,10 @@
           width:500px;
           height:500px;
       }
+      .tableroEjemplo {
+          width:200px;
+          height:200px;
+      }
   </style>
   <div class="mainrules">
       <h1>Atari-go</h1>
@@ -34,28 +38,31 @@
       <ul>
       <li>Elementos de juego</li>
           <ul><li> El Atari-go es un juego de dos <strong>jugadores</strong>. Un jugador utiliza las <strong>piedras negras</strong>, y el otro las <strong>blancas</strong>.</li>
-              <li> Se juega sobre un tablero de 9x9 <strong>intersecciones</strong>.</li>
+              <li> Se juega sobre un tablero de 9x9 <strong>intersecciones</strong>, que inicialmente se encuentra vacío, como se muestra en la figura.</li>
+              <div id="tableroEjemplo" class="tableroEjemplo"></div>
               <li> A lo largo del juego, en cada momento algunas intersecciones estarán ocupadas por piedras negras, algunas por piedras blancas, y las restantes se encontrarán vacías.</li>
-              <li> Inicialmente, el tablero se encuentra vacío.</li>
-              <li> Durante el juego, llamamos un <strong>grupo</strong> de un jugador, a un conjunto maximal de piedras de su color conectadas entre sí horizontal o verticalmente.</li>
-              <li> Decimos que una intersección vacía del tablero es una <strong>libertad</strong> de un grupo, cuando es adyacente horizontal o verticalmente a alguna de las piedras del grupo.</li>
+              <div id="tableroEjemplo2" class="tableroEjemplo"></div>
+              <li> Durante el juego, llamamos un <strong>grupo</strong> de un jugador, a un conjunto maximal de piedras de su color conectadas entre sí horizontal o verticalmente. En la figura hay 6 grupos, 4 blancos (uno de ellos es una piedra individual marcada con <em>A</em>) y 2 negros.</li>
+              <div id="tableroEjemplo3" class="tableroEjemplo"></div>
+              <li> Decimos que una intersección vacía del tablero es una <strong>libertad</strong> de un grupo, cuando es adyacente horizontal o verticalmente a alguna de las piedras del grupo. En la figura siguiente se muestran las libertades de los grupos anteriormente marcados con <em>X</em> y <em>O</em>, utilizando esos mismos símbolos. Además, se encuentra marcada especialmente con un triángulo la única libertad compartida entre esos dos grupos.</li>
+              <div id="tableroEjemplo4" class="tableroEjemplo"></div>
           </ul>
       <li>Regla de juego y alternancia</li>
           <ul><li>Comienza el jugador que utiliza las piedras <strong>negras</strong>.
                   Los jugadores <strong>se alternan</strong> realizando jugadas una vez cada uno. Una jugada válida consiste en <strong>colocar una piedra del color del jugador sobre
                   una intersección vacía</strong> del tablero.
-          </li></ul>
+          </li>
+          <div id="tableroEjemplo5" class="tableroEjemplo"></div>
+          </ul>
       <li>Regla de captura</li>
           <ul><li>Si luego de que un jugador realice una jugada, uno o más de los grupos de su rival queda sin libertades, dichos grupos son <strong>capturados</strong> y se sacan todas sus piedras del tablero.</li>
-              <li>Notar que en la siguiente posición, si blanco juega en <em>A</em>, logra capturar las dos piedras negras.<br>
-                    <img src="images/captura.png"> </li>
-              <li>Notar que la jugada indicada con <em>a</em> sería válida para negro, y al realizarla captura la piedra blanca marcada con un círculo.<br>
-                    <img src="images/ko.png"> </li>
+              <li>En el siguiente ejemplo, se muestra en cada caso cómo si blanco juega en <em>A</em>, logra capturar las piedras negras marcadas.<br>
+                    <div id="tableroEjemplo6" class="tableroEjemplo"></div>
           </ul>
       <li>Regla de no suicidio</li>
           <ul><li>Si luego de que un jugador realice una jugada (incluyendo de ser necesaria, la aplicación de la regla de captura) un grupo del propio jugador queda sin libertades, tal jugada se considera suicidio y está <strong>prohibida</strong>.</li>
               <li>Por ejemplo, la jugada indicada con <em>A</em> sería inválida para blanco, pues sus piedras del rincón se quedarían sin libertades.<br>
-                    <img src="images/suicidio.png"> </li>
+                    <div id="tableroEjemplo7" class="tableroEjemplo"></div>
           </ul>
       <li>Objetivo:</li>
           <ul><li><strong>El primer jugador en capturar un grupo a su rival gana</strong>. Si un jugador no tiene jugadas válidas, pierde inmediatamente.</li></ul>
@@ -1133,6 +1140,154 @@ document.getElementById("buttonStrength8").onclick = setStrength(8,4000,1500,28,
 document.getElementById("buttonStrength9").onclick = setStrength(9,5000,2500,32, 2000000);
 
 document.getElementById("buttonStrength1").onclick();
+
+/*
+gliftWidget = glift.create({
+      divId: "gliftDiv",
+      sgfDefaults : {
+        sgfString : getSgfString(),
+        boardRegion : glift.enums.boardRegions.ALL,
+        initialPosition : moveHistory.length,
+        widgetType : glift.WidgetType.GAME_VIEWER,
+        uiComponents : ["BOARD"]
+      },
+      display: {
+        theme: 'DEPTH',
+        goBoardBackground: 'images/purty_wood.png'
+      }
+    });
+*/
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9])",
+    widgetType: 'EXAMPLE',
+    initialPosition: 0,
+    nextMovesPath: '0:19',
+    boardRegion : glift.enums.boardRegions.ALL,
+    uiComponents : ["BOARD"],
+  },
+  divId: "tableroEjemplo",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+    disableZoomForMobile: true
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9];AB[cd];AW[dd];AB[cc];AW[dd];AB[ff];AW[dg])",
+    widgetType: 'EXAMPLE',
+    initialPosition: 6,
+    boardRegion : glift.enums.boardRegions.ALL,
+    nextMovesPath: "0:0",
+    uiComponents : ["BOARD"],
+  },
+  divId: "tableroEjemplo2",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+    disableZoomForMobile: true
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9];AB[cd];AW[dd];AB[cc];AW[dd];AB[ff];AW[dg];AW[ce];AW[be];AB[gf];AB[ge];AB[gd];AB[hd];AB[hc];AW[gc];AW[df];AW[ef];AW[eg];AW[fc];AW[fd];AW[fe];AW[fb];AW[fa]AW[gb]" +
+                ";LB[dd:A]MA[gd][hd][hc][ge][gf][ff]CR[gb][fe][fd][fc][fb][fa][gc]TR[cc][cd]SQ[ce][be])",
+    widgetType: 'EXAMPLE',
+    initialPosition: 23,
+    boardRegion : glift.enums.boardRegions.ALL,
+    nextMovesPath: "0:0",
+    uiComponents : ["BOARD"],
+  },
+  divId: "tableroEjemplo3",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+    disableZoomForMobile: true
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9];AB[cd];AW[dd];AB[cc];AW[dd];AB[ff];AW[dg];AW[ce];AW[be];AB[gf];AB[ge];AB[gd];AB[hd];AB[hc];AW[gc];AW[df];AW[ef];AW[eg];AW[fc];AW[fd];AW[fe];AW[fb];AW[fa]AW[gb]" +
+                ";MA[fg][gg][hf][he][id][ic]CR[ea][eb][ec][ed][ee][ga]TR[hb])",
+    widgetType: 'EXAMPLE',
+    initialPosition: 23,
+    boardRegion : glift.enums.boardRegions.ALL,
+    nextMovesPath: "0:0",
+    uiComponents : ["BOARD"],
+  },
+  divId: "tableroEjemplo4",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+    disableZoomForMobile: true
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9];B[cd];W[dd];B[cc];W[gd];B[ff];W[dg];)",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo5",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+    disableZoomForMobile: true
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AW[cc]AW[cd]AW[db]AW[ec]AW[ed]AB[dc]AB[dd]" +
+                "AW[ga]AW[gb]AW[gc]AW[gd]AW[ge]AW[gf]AW[gg]AW[ha]AW[ia]AW[ib]AW[ic]AW[id]AW[ie]AW[if]AW[ig]"+ 
+                "AW[hh]AB[hc][hd][he][hf][hg]AW[ff][fh]AB[fg][ef][eh][dg]" +
+                "LB[de:A]MA[dd][dc];W[de]LB[hb:A]MA[hc][hd][he][hf][hg];W[hb]LB[eg:A]MA[fg];W[eg])",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo6",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+    disableZoomForMobile: true
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AW[gf][hf][if][eg][fg][gg][eh][ih][hi]AB[hh][hg][ig][gh][gi]LB[ii:A])",
+    widgetType: 'EXAMPLE',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD"],
+  },
+  divId: "tableroEjemplo7",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+    disableZoomForMobile: true
+  }
+});
 
   </script>
   
