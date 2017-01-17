@@ -148,7 +148,12 @@
   <div style="clear:both" id="learn-double-atari">
       <h1>Atari Doble</h1>
       <ul>
-      <li>Atari doble para capturar.</li>
+      <li>El atari doble es una <em>técnica de captura</em>.</li>
+      <li>Consiste en una jugada que pone en atari a dos grupos <strong>a la vez</strong>.</li>
+      <li>Como generalmente el rival no puede defender ambos en una sola jugada, alguno de los dos grupos será capturado necesariamente.</li>
+      <li>En los siguientes ejemplos se muestra un atari doble por parte de blanco, y se ve que sin importar qué grupo defienda negro, su otro grupo será capturado.</li>
+      <div id="tableroEjemplo15" class="tableroEjemplo"></div>
+      <div id="tableroEjemplo16" class="tableroEjemplo"></div>
       </ul>
       <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
   </div>
@@ -1441,6 +1446,40 @@ glift.create({
     uiComponents : ["BOARD","ICONBAR"],
   },
   divId: "tableroEjemplo14",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[bb][cb][db][ec][fd][ge][he][hd][hc]AW[eb][fb][fc][gc][gd][hb];W[ed];B[fe];W[dc])",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo15",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[bb][cb][db][ec][fd][ge][he][hd][hc]AW[eb][fb][fc][gc][gd][hb];W[ed];B[dc];W[fe])",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo16",
   display: {
     theme: 'DEPTH',
     goBoardBackground: 'images/purty_wood.png',
