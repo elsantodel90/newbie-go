@@ -1,5 +1,3 @@
--> Poner un boton de undo
--> Terminar de explicar todo lo de atarigo, para asi cerrarlo
 -> Engine de go: remi "Crazy Sensei" parece javascript perfectamente utilizable de una. Y jugar con stone counting.
 -> Agregar una explicacion friendly de "reglas chinas"
 -> Agregar una explicacion friendly de "reglas japonesas"

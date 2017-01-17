@@ -83,6 +83,7 @@
             &nbsp; 8 <input type="radio" id="buttonStrength8" name="strengthSelector" value="8">
             &nbsp; 9 <input type="radio" id="buttonStrength9" name="strengthSelector" value="9">
       </form>
+      <button type="button" id="undoButton">Deshacer jugada</button>
   </div>
   <div>
       <h2><span id="atariGoHeader">AtariBot: Fuerza 1</span><span id="percentageIndicator"></span></h2>
@@ -461,6 +462,7 @@ function move(board, player, x,y) {
 }
 
 function resetGame() {
+    disableUndo();
     currentPlayer = BLACK;
     humanPlayer = otherPlayer(humanPlayer);
     globalBoard = [];
@@ -512,8 +514,10 @@ function makeMove(x,y) {
             setTimeout(showMessageFunction(currentPlayer == humanPlayer) , 100);
         else {
             currentPlayer = otherPlayer(currentPlayer);
-            if (currentPlayer != humanPlayer)
+            if (currentPlayer != humanPlayer) {
                 setTimeout(makeAIMove, 100);
+                disableUndo();
+            }
         }
     }
     else if (moveResult["status"] != "OUT_OF_RANGE")
@@ -1175,6 +1179,8 @@ function makeAIMove() {
             drawBoard();
             document.getElementById("atariGoHeader").innerHTML = "AtariBot: Fuerza " + engineStrength;
             document.getElementById("percentageIndicator").innerHTML = "";
+            if (boardHistory.length > 2)
+                enableUndo();
         });
     }, 100);
 }
@@ -1215,6 +1221,29 @@ document.getElementById("buttonStrength8").onclick = setStrength(8,4000,1500,28,
 document.getElementById("buttonStrength9").onclick = setStrength(9,5000,2500,32, 2000000);
 
 document.getElementById("buttonStrength1").onclick();
+
+disableUndo();
+
+function enableUndo() {
+    document.getElementById("undoButton").disabled = false;
+}
+
+function disableUndo() {
+    document.getElementById("undoButton").disabled = true;
+}
+
+document.getElementById("undoButton").onclick = function () {
+    if (boardHistory.length < 3)
+        throw "Impossible!! boardHistory.length should be >= 3";
+    boardHistory.pop();
+    moveHistory.pop();
+    boardHistory.pop();
+    moveHistory.pop();
+    globalBoard = boardCopy(boardHistory[boardHistory.length-1]);
+    drawBoard();
+    if (boardHistory.length < 3)
+        disableUndo();
+};
 
 /*
 gliftWidget = glift.create({
