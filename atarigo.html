@@ -99,8 +99,8 @@
                 <li><a href="#learn-liberties" >Libertades</a></li>
                 <li><a href="#learn-atari" >Atari</a></li>
                 <li><a href="#learn-double-atari" >Atari Doble</a></li>
-                <li><a href="#learn-succesive-ataris" >Ataris Sucesivos</a></li>
                 <li><a href="#learn-second-line" >Atari en segunda línea</a></li>
+                <li><a href="#learn-succesive-ataris" >Ataris Sucesivos</a></li>
                 <li><a href="#learn-ladders" >Persecución: Escaleras</a></li>
                 <li><a href="#learn-immortal" >Grupo inmortal</a></li>
             </ul>
@@ -157,17 +157,23 @@
       </ul>
       <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
   </div>
-  <div style="clear:both" id="learn-succesive-ataris">
-      <h1>Ataris Sucesivos</h1>
-      <ul>
-      <li>Hablar de eso. Ejemplo.</li>
-      </ul>
-      <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
-  </div>
   <div id="learn-second-line">
       <h1>Atari en segunda línea</h1>
       <ul>
-      <li>Ejemplo particular de la idea anterior pues en el borde hay pocas libertades y nos atrapan.</li>
+      <li>El atari en segunda línea es un tipo de atari muy común y particular, que se produce sobre una piedra a solamente <strong>una intersección</strong> de separación del borde del tablero.</li>
+      <li>Cuando se produce un atari de estas características de forma tal que para defender la piedra, el jugador se ve obligado a jugar contra el borde, la falta de libertades que hay allí lo lleva a ser capturado.</li>
+      <li>Al ser tan común y producir una captura segura, es importante aprender a reconocer rápidamente las posibilidades de atari en segunda línea, <strong>tanto propias como del rival</strong>.</li>
+      <li>En el siguiente ejemplo se muestra un típico atari en segunda línea, y como por más que se intente escapar, al estar contra el borde no hay suficiente espacio y la captura es inevitable.</li>
+      <div id="tableroEjemplo17" class="tableroEjemplo"></div>
+      </ul>
+      <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
+  </div>
+  <div style="clear:both" id="learn-succesive-ataris">
+      <h1>Ataris Sucesivos</h1>
+      <ul>
+      <li>Los ataris sucesivos son una <em>técnica de captura</em></li>
+      
+      <div id="tableroEjemplo18" class="tableroEjemplo"></div>
       </ul>
       <p><a href="#atariBotHeaderDiv">Jugar con AtariBot</a></p>
   </div>
@@ -1480,6 +1486,23 @@ glift.create({
     uiComponents : ["BOARD","ICONBAR"],
   },
   divId: "tableroEjemplo16",
+  display: {
+    theme: 'DEPTH',
+    goBoardBackground: 'images/purty_wood.png',
+  }
+});
+
+glift.create({
+  sgf: {
+    //url: 'sgf/gogameguru_commentary.sgf',
+    sgfString : "(;SZ[9]AB[ed][db][ec][fd][ge][he][hd][hc]AW[dc][eb][fb][fc][gc][gd][hb];W[cb];B[da];W[ca];B[ea];W[fa])",
+    widgetType: 'GAME_VIEWER',
+    initialPosition: 0,
+    boardRegion : glift.enums.boardRegions.ALL,
+    //nextMovesPath: "0",
+    uiComponents : ["BOARD","ICONBAR"],
+  },
+  divId: "tableroEjemplo17",
   display: {
     theme: 'DEPTH',
     goBoardBackground: 'images/purty_wood.png',
